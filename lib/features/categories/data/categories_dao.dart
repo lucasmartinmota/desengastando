@@ -30,6 +30,42 @@ class CategoriesDao extends DatabaseAccessor<AppDatabase>
   Future<int> addCategory(CategoriesCompanion entry) =>
       into(categories).insert(entry);
 
+  /// Cria uma categoria no fim da lista do seu tipo.
+  Future<int> createCategory({
+    required String name,
+    required String iconKey,
+    required int color,
+    required TransactionType type,
+  }) => transaction(() async {
+    final maxOrder = categories.sortOrder.max();
+    final row =
+        await (selectOnly(categories)
+              ..addColumns([maxOrder])
+              ..where(categories.type.equalsValue(type)))
+            .getSingle();
+    return into(categories).insert(
+      CategoriesCompanion.insert(
+        name: name,
+        iconKey: iconKey,
+        color: color,
+        type: type,
+        sortOrder: Value((row.read(maxOrder) ?? -1) + 1),
+      ),
+    );
+  });
+
+  /// Grava a nova ordem: a posição de cada id em [orderedIds] vira o
+  /// `sortOrder` dele.
+  Future<void> reorder(List<int> orderedIds) => batch((b) {
+    for (final (index, id) in orderedIds.indexed) {
+      b.update(
+        categories,
+        CategoriesCompanion(sortOrder: Value(index)),
+        where: (c) => c.id.equals(id),
+      );
+    }
+  });
+
   Future<bool> updateCategory(TransactionCategory category) =>
       update(categories).replace(category);
 

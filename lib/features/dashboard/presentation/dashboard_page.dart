@@ -37,6 +37,9 @@ class DashboardPage extends ConsumerWidget {
         bottom: const MonthSwitcher(),
       ),
       floatingActionButton: FloatingActionButton(
+        // Sem Hero: as abas ficam montadas no IndexedStack e os FABs
+        // conflitariam ao abrir uma tela por cima.
+        heroTag: null,
         tooltip: 'Novo lançamento',
         onPressed: () => TransactionFormSheet.show(context),
         child: const Icon(Icons.add_rounded),

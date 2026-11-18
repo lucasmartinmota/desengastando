@@ -142,6 +142,40 @@ void main() {
       expect(active.map((c) => c.name), isNot(contains('Lazer')));
       expect(all.map((c) => c.name), contains('Lazer'));
     });
+
+    Future<List<String>> expenseNames() async => [
+      for (final c
+          in await db.categoriesDao
+              .watchCategories(type: TransactionType.expense)
+              .first)
+        c.name,
+    ];
+
+    test('createCategory coloca a nova no fim do seu tipo', () async {
+      await db.categoriesDao.createCategory(
+        name: 'Pets',
+        iconKey: 'pets',
+        color: 0xFF43AA8B,
+        type: TransactionType.expense,
+      );
+
+      expect((await expenseNames()).last, 'Pets');
+    });
+
+    test('reorder grava a ordem nova', () async {
+      final ids = [
+        for (final c
+            in await db.categoriesDao
+                .watchCategories(type: TransactionType.expense)
+                .first)
+          c.id,
+      ];
+      await db.categoriesDao.reorder(ids.reversed.toList());
+
+      final names = await expenseNames();
+      expect(names.first, 'Outros');
+      expect(names.last, 'Alimentação');
+    });
   });
 
   group('BudgetsDao', () {

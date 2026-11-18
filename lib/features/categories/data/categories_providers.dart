@@ -20,3 +20,13 @@ activeCategoriesProvider = StreamProvider.autoDispose
       (ref, type) =>
           ref.watch(categoriesDaoProvider).watchCategories(type: type),
     );
+
+/// Todas as categorias de um tipo, incluindo as arquivadas (para a tela de
+/// gerenciamento e para validar nomes repetidos).
+final StreamProviderFamily<List<TransactionCategory>, TransactionType>
+allCategoriesProvider = StreamProvider.autoDispose
+    .family<List<TransactionCategory>, TransactionType>(
+      (ref, type) => ref
+          .watch(categoriesDaoProvider)
+          .watchCategories(type: type, includeArchived: true),
+    );

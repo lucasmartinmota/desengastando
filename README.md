@@ -11,7 +11,7 @@ Seus dados ficam só no seu aparelho.
 - [x] **Etapa 1** — Banco (Drift) e domínio: transações, categorias, orçamentos
 - [x] **Etapa 2** — Lançamentos: cadastro rápido e listagem
 - [x] **Etapa 3** — Resumo do mês com gráficos
-- [ ] **Etapa 4** — Gerenciar categorias
+- [x] **Etapa 4** — Gerenciar categorias
 - [ ] **Etapa 5** — Orçamentos por categoria com alertas
 - [ ] **Etapa 6** — Polimento, ícone, backup/exportação
 

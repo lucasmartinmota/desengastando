@@ -1,5 +1,6 @@
 import 'package:desengastando/app/app_shell.dart';
 import 'package:desengastando/features/budgets/presentation/budgets_page.dart';
+import 'package:desengastando/features/categories/presentation/categories_page.dart';
 import 'package:desengastando/features/dashboard/presentation/dashboard_page.dart';
 import 'package:desengastando/features/transactions/presentation/transactions_page.dart';
 import 'package:go_router/go_router.dart';
@@ -11,6 +12,9 @@ abstract final class AppRoutes {
   static const dashboard = '/resumo';
   static const transactions = '/lancamentos';
   static const budgets = '/orcamentos';
+
+  /// Fora das abas: abre por cima da barra de navegação.
+  static const categories = '/categorias';
 }
 
 @Riverpod(keepAlive: true)
@@ -46,6 +50,10 @@ GoRouter router(Ref ref) {
             ],
           ),
         ],
+      ),
+      GoRoute(
+        path: AppRoutes.categories,
+        builder: (_, _) => const CategoriesPage(),
       ),
     ],
   );

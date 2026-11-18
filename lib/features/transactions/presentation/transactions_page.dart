@@ -1,3 +1,4 @@
+import 'package:desengastando/app/router.dart';
 import 'package:desengastando/app/theme/app_colors.dart';
 import 'package:desengastando/app/theme/app_theme.dart';
 import 'package:desengastando/core/formatters/currency_formatter.dart';
@@ -12,6 +13,7 @@ import 'package:desengastando/features/transactions/presentation/transaction_for
 import 'package:desengastando/features/transactions/presentation/transaction_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 class TransactionsPage extends ConsumerStatefulWidget {
   const TransactionsPage({super.key});
@@ -45,9 +47,19 @@ class _TransactionsPageState extends ConsumerState<TransactionsPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Lançamentos'),
+        actions: [
+          IconButton(
+            tooltip: 'Categorias',
+            icon: const Icon(Icons.category_outlined),
+            onPressed: () => context.push(AppRoutes.categories),
+          ),
+        ],
         bottom: const MonthSwitcher(),
       ),
       floatingActionButton: FloatingActionButton(
+        // Sem Hero: as abas ficam montadas no IndexedStack e os FABs
+        // conflitariam ao abrir uma tela por cima.
+        heroTag: null,
         tooltip: 'Novo lançamento',
         onPressed: () => TransactionFormSheet.show(context),
         child: const Icon(Icons.add_rounded),

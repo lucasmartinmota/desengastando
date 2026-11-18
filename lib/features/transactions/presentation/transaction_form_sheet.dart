@@ -5,6 +5,7 @@ import 'package:desengastando/core/formatters/cents_input_formatter.dart';
 import 'package:desengastando/core/formatters/date_labels.dart';
 import 'package:desengastando/data/database/app_database.dart';
 import 'package:desengastando/features/categories/data/categories_providers.dart';
+import 'package:desengastando/features/categories/presentation/category_form_sheet.dart';
 import 'package:desengastando/features/categories/presentation/category_icons.dart';
 import 'package:desengastando/features/transactions/data/transactions_providers.dart';
 import 'package:desengastando/features/transactions/domain/payment_method.dart';
@@ -138,6 +139,12 @@ class _TransactionFormSheetState extends ConsumerState<TransactionFormSheet> {
     navigator.pop();
   }
 
+  /// Cria uma categoria sem sair do lançamento e já a deixa selecionada.
+  Future<void> _createCategory() async {
+    final id = await CategoryFormSheet.show(context, type: _type);
+    if (id != null && mounted) setState(() => _categoryId = id);
+  }
+
   Future<void> _pickDate() async {
     final today = DateTime.now();
     final picked = await showDatePicker(
@@ -244,6 +251,12 @@ class _TransactionFormSheetState extends ConsumerState<TransactionFormSheet> {
                             onSelected: (_) =>
                                 setState(() => _categoryId = category.id),
                           ),
+                        ActionChip(
+                          avatar: const Icon(Icons.add_rounded, size: 18),
+                          label: const Text('Nova'),
+                          tooltip: 'Nova categoria',
+                          onPressed: _createCategory,
+                        ),
                       ],
                     ),
                     loading: () => const LinearProgressIndicator(),
