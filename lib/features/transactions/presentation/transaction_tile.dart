@@ -23,6 +23,7 @@ class TransactionTile extends StatelessWidget {
       if (hasDescription) category.name,
       if (transaction.paymentMethod case final method?) method.label,
     ].join(' · ');
+    final isFixed = transaction.recurrenceId != null;
 
     final signed = item.signedCents;
     final amountColor = signed < 0
@@ -37,7 +38,27 @@ class TransactionTile extends StatelessWidget {
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
-      subtitle: subtitle.isEmpty ? null : Text(subtitle),
+      subtitle: subtitle.isEmpty && !isFixed
+          ? null
+          : Text.rich(
+              TextSpan(
+                children: [
+                  if (isFixed) ...[
+                    WidgetSpan(
+                      alignment: PlaceholderAlignment.middle,
+                      child: Icon(
+                        Icons.event_repeat_rounded,
+                        size: 14,
+                        color: theme.colorScheme.onSurfaceVariant,
+                        semanticLabel: 'Fixo',
+                      ),
+                    ),
+                    TextSpan(text: subtitle.isEmpty ? ' Fixo' : ' '),
+                  ],
+                  TextSpan(text: subtitle),
+                ],
+              ),
+            ),
       trailing: Text(
         CurrencyFormatter.formatSigned(signed),
         style: AppTheme.money(

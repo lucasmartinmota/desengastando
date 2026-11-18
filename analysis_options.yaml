@@ -3,6 +3,8 @@ include: package:very_good_analysis/analysis_options.yaml
 analyzer:
   exclude:
     - "**/*.g.dart"
+    # Gerado por `drift_dev schema generate` (testes de migração).
+    - "test/generated_migrations/**"
 
   errors:
     # App (não é pacote publicado): exigir docs em todo membro público é ruído.

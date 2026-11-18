@@ -1,6 +1,7 @@
 import 'package:desengastando/app/router.dart';
 import 'package:desengastando/features/backup/data/backup_providers.dart';
 import 'package:desengastando/features/backup/data/backup_service.dart';
+import 'package:desengastando/features/recurrences/data/recurrences_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -98,8 +99,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         content: Text(
           'Backup de ${DateFormat('dd/MM/yyyy').format(contents.exportedAt)} '
           'com ${_count(contents.transactions.length, 'lançamento')}, '
-          '${_count(contents.categories.length, 'categoria')} e '
-          '${_count(contents.budgets.length, 'orçamento')}.\n\n'
+          '${_count(contents.categories.length, 'categoria')}, '
+          '${_count(contents.budgets.length, 'orçamento')} e '
+          '${_count(contents.recurrences.length, 'lançamento fixo', 'lançamentos fixos')}.\n\n'
           'Todos os dados atuais serão substituídos. Se quiser guardá-los, '
           'exporte um backup antes.',
         ),
@@ -118,14 +120,16 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     if (confirmed != true) return;
     await _run(() async {
       await service.restore(contents);
+      // Fixos do backup podem ter meses vencidos desde que ele foi feito.
+      await ref.read(recurrencesDaoProvider).generateDue();
       messenger.showSnackBar(
         const SnackBar(content: Text('Backup restaurado')),
       );
     }, 'Não foi possível restaurar o backup');
   }
 
-  static String _count(int n, String word) =>
-      '$n ${n == 1 ? word : '${word}s'}';
+  static String _count(int n, String word, [String? plural]) =>
+      '$n ${n == 1 ? word : plural ?? '${word}s'}';
 
   @override
   Widget build(BuildContext context) {
@@ -143,6 +147,13 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         padding: const EdgeInsets.only(bottom: 32),
         children: [
           const _Header('Organização'),
+          ListTile(
+            leading: const Icon(Icons.event_repeat_rounded),
+            title: const Text('Lançamentos fixos'),
+            subtitle: const Text('Salário, aluguel, assinaturas...'),
+            trailing: const Icon(Icons.chevron_right_rounded),
+            onTap: () => context.push(AppRoutes.recurrences),
+          ),
           ListTile(
             leading: const Icon(Icons.category_outlined),
             title: const Text('Categorias'),

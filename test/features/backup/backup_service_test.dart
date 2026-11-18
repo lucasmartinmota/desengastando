@@ -41,6 +41,14 @@ void main() {
       limitCents: 80000,
     );
     await db.categoriesDao.setArchived(expense['Lazer']!.id, archived: true);
+    await db.recurrencesDao.createRecurrence(
+      amountCents: 8990,
+      categoryId: expense['Assinaturas']!.id,
+      dayOfMonth: 8,
+      includeCurrentMonth: true,
+      description: 'Streaming',
+      now: DateTime(2026, 11, 18),
+    );
   }
 
   test('exporta e restaura tudo, inclusive ids e arquivadas', () async {
@@ -58,8 +66,29 @@ void main() {
       await service.exportJson(now: DateTime(2000)),
     );
     final transactions = await other.select(other.transactions).get();
-    expect(transactions.single.date, DateTime(2026, 11, 3));
-    expect(transactions.single.paymentMethod, PaymentMethod.pix);
+    final manual = transactions.firstWhere((t) => t.recurrenceId == null);
+    expect(manual.date, DateTime(2026, 11, 3));
+    expect(manual.paymentMethod, PaymentMethod.pix);
+    final recurrence = (await other.select(other.recurrences).get()).single;
+    expect(recurrence.description, 'Streaming');
+    expect(
+      transactions.where((t) => t.recurrenceId == recurrence.id),
+      hasLength(1),
+    );
+  });
+
+  test('aceita backup do formato 1 (sem lançamentos fixos)', () async {
+    await seed();
+    final data = jsonDecode(await service.exportJson()) as Map<String, dynamic>
+      ..['format'] = 1
+      ..remove('recurrences');
+    for (final t in data['transactions'] as List) {
+      (t as Map<String, dynamic>).remove('recurrenceId');
+    }
+    final contents = service.parse(jsonEncode(data));
+    expect(contents.recurrences, isEmpty);
+    expect(contents.transactions, hasLength(2));
+    await service.restore(contents);
   });
 
   test('recusa arquivos que não são backup', () {
@@ -76,7 +105,7 @@ void main() {
       throwsA(isA<BackupFormatException>()),
     );
     expect(
-      () => service.parse(jsonEncode({'app': 'desengastando', 'format': 1})),
+      () => service.parse(jsonEncode({'app': 'desengastando', 'format': 2})),
       throwsA(isA<BackupFormatException>()),
     );
   });

@@ -58,6 +58,11 @@ class _TransactionsPageState extends ConsumerState<TransactionsPage> {
         title: const Text('Lançamentos'),
         actions: [
           IconButton(
+            tooltip: 'Lançamentos fixos',
+            icon: const Icon(Icons.event_repeat_rounded),
+            onPressed: () => context.push(AppRoutes.recurrences),
+          ),
+          IconButton(
             tooltip: 'Categorias',
             icon: const Icon(Icons.category_outlined),
             onPressed: () => context.push(AppRoutes.categories),

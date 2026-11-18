@@ -20,6 +20,7 @@ v0.1 — pronto para uso pessoal. Roadmap concluído:
 - **Lançamentos** rápidos (valor já focado, "Hoje" pré-selecionado), com edição, exclusão por gesto e desfazer
 - **Resumo do mês**: saldo, comparação com o mês anterior, gastos por categoria e evolução de 6 meses
 - **Categorias** personalizáveis (cor, ícone, ordem), arquivadas sem perder o histórico
+- **Lançamentos fixos** (salário, aluguel, assinaturas): cadastre uma vez e o app lança sozinho todo mês, no dia certo
 - **Orçamentos** mensais por categoria, com aviso a partir de 80% e ao estourar
 - **Backup** completo em JSON (exportar/restaurar) e **planilha CSV** dos lançamentos
 
@@ -47,6 +48,10 @@ lib/
 
 - **Dinheiro é `int` em centavos.** Nunca `double`. Conversão só na exibição (`CurrencyFormatter`).
 - Arquivos `*.g.dart` são gerados e versionados; regenere após mudar providers ou tabelas.
+- **Mudou o banco?** Suba `schemaVersion`, escreva o passo em `onUpgrade` e rode
+  `dart run drift_dev schema dump lib/data/database/app_database.dart drift_schemas/` e
+  `dart run drift_dev schema generate drift_schemas/ test/generated_migrations/`;
+  `test/data/migration_test.dart` valida a migração contra os schemas antigos.
 
 ## Rodando
 

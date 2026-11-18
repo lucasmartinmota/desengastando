@@ -2,6 +2,7 @@ import 'package:desengastando/data/database/default_categories.dart';
 import 'package:desengastando/data/database/tables.dart';
 import 'package:desengastando/features/budgets/data/budgets_dao.dart';
 import 'package:desengastando/features/categories/data/categories_dao.dart';
+import 'package:desengastando/features/recurrences/data/recurrences_dao.dart';
 import 'package:desengastando/features/transactions/data/transactions_dao.dart';
 import 'package:desengastando/features/transactions/domain/payment_method.dart';
 import 'package:desengastando/features/transactions/domain/transaction_type.dart';
@@ -14,8 +15,8 @@ export 'package:drift/drift.dart' show Value;
 part 'app_database.g.dart';
 
 @DriftDatabase(
-  tables: [Categories, Transactions, Budgets],
-  daos: [CategoriesDao, TransactionsDao, BudgetsDao],
+  tables: [Categories, Transactions, Budgets, Recurrences],
+  daos: [CategoriesDao, TransactionsDao, BudgetsDao, RecurrencesDao],
 )
 class AppDatabase extends _$AppDatabase {
   /// Sem [executor], abre o arquivo SQLite do app. Testes passam um banco
@@ -30,14 +31,22 @@ class AppDatabase extends _$AppDatabase {
     ),
   );
 
+  /// v2: lançamentos fixos (tabela `recurrences` e
+  /// `transactions.recurrence_id`).
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) async {
       await m.createAll();
       await batch((b) => b.insertAll(categories, defaultCategories));
+    },
+    onUpgrade: (m, from, to) async {
+      if (from < 2) {
+        await m.createTable(recurrences);
+        await m.addColumn(transactions, transactions.recurrenceId);
+      }
     },
     beforeOpen: (details) async {
       // SQLite vem com chaves estrangeiras desligadas por padrão.

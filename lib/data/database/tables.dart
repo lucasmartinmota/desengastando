@@ -45,6 +45,38 @@ class Transactions extends Table {
   TextColumn get description => text().withLength(max: 120).nullable()();
   TextColumn get paymentMethod => textEnum<PaymentMethod>().nullable()();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+
+  /// Lançamento fixo que gerou este (nulo nos lançados à mão). Apagar a
+  /// recorrência mantém os lançamentos já feitos.
+  IntColumn get recurrenceId => integer().nullable().references(
+    Recurrences,
+    #id,
+    onDelete: KeyAction.setNull,
+  )();
+}
+
+/// Lançamento fixo mensal (salário, aluguel, assinaturas...). Cada mês vira
+/// um [Transactions] normal quando a data chega.
+class Recurrences extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get amountCents =>
+      integer().check(amountCents.isBiggerThanValue(0))();
+  IntColumn get categoryId =>
+      integer().references(Categories, #id, onDelete: KeyAction.restrict)();
+  TextColumn get description => text().withLength(max: 120).nullable()();
+  TextColumn get paymentMethod => textEnum<PaymentMethod>().nullable()();
+
+  /// Dia do mês (1–31); em meses mais curtos vale o último dia.
+  IntColumn get dayOfMonth =>
+      integer().check(dayOfMonth.isBetweenValues(1, 31))();
+
+  /// Pausada: não gera novos lançamentos.
+  BoolColumn get active => boolean().withDefault(const Constant(true))();
+
+  /// Último mês já gerado (ou dado como resolvido), em `aaaamm`. Garante
+  /// que cada mês saia uma vez só, mesmo que o lançamento seja apagado.
+  IntColumn get lastGeneratedMonth => integer()();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 }
 
 /// Limite mensal de gasto por categoria de despesa (vale para todo mês).

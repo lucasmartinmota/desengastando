@@ -10,6 +10,9 @@ class YearMonth implements Comparable<YearMonth> {
 
   factory YearMonth.now() => YearMonth.fromDate(DateTime.now());
 
+  /// Inverso de [key] (ex.: `202611` → novembro/2026).
+  factory YearMonth.fromKey(int key) => YearMonth(key ~/ 100, key % 100);
+
   final int year;
   final int month;
 
@@ -22,6 +25,12 @@ class YearMonth implements Comparable<YearMonth> {
   YearMonth get next => YearMonth.fromDate(DateTime(year, month + 1));
 
   YearMonth get previous => YearMonth.fromDate(DateTime(year, month - 1));
+
+  /// `aaaamm` como inteiro (ex.: `202611`), para guardar no banco.
+  int get key => year * 100 + month;
+
+  /// Quantidade de dias do mês.
+  int get daysInMonth => DateTime(year, month + 1, 0).day;
 
   bool contains(DateTime date) => date.year == year && date.month == month;
 

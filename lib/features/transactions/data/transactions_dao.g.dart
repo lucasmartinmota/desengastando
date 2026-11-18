@@ -5,6 +5,7 @@ part of 'transactions_dao.dart';
 // ignore_for_file: type=lint
 mixin _$TransactionsDaoMixin on DatabaseAccessor<AppDatabase> {
   $CategoriesTable get categories => attachedDatabase.categories;
+  $RecurrencesTable get recurrences => attachedDatabase.recurrences;
   $TransactionsTable get transactions => attachedDatabase.transactions;
   TransactionsDaoManager get managers => TransactionsDaoManager(this);
 }
@@ -14,6 +15,8 @@ class TransactionsDaoManager {
   TransactionsDaoManager(this._db);
   $$CategoriesTableTableManager get categories =>
       $$CategoriesTableTableManager(_db.attachedDatabase, _db.categories);
+  $$RecurrencesTableTableManager get recurrences =>
+      $$RecurrencesTableTableManager(_db.attachedDatabase, _db.recurrences);
   $$TransactionsTableTableManager get transactions =>
       $$TransactionsTableTableManager(_db.attachedDatabase, _db.transactions);
 }

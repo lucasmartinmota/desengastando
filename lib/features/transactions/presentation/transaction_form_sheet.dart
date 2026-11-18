@@ -9,6 +9,7 @@ import 'package:desengastando/features/budgets/domain/budget_progress.dart';
 import 'package:desengastando/features/categories/data/categories_providers.dart';
 import 'package:desengastando/features/categories/presentation/category_form_sheet.dart';
 import 'package:desengastando/features/categories/presentation/category_icons.dart';
+import 'package:desengastando/features/recurrences/data/recurrences_providers.dart';
 import 'package:desengastando/features/transactions/data/transactions_providers.dart';
 import 'package:desengastando/features/transactions/domain/payment_method.dart';
 import 'package:desengastando/features/transactions/domain/transaction_models.dart';
@@ -51,6 +52,7 @@ class _TransactionFormSheetState extends ConsumerState<TransactionFormSheet> {
   int? _categoryId;
   late DateTime _date;
   PaymentMethod? _paymentMethod;
+  bool _repeatMonthly = false;
   bool _saving = false;
 
   bool get _isEditing => widget.initial != null;
@@ -112,15 +114,18 @@ class _TransactionFormSheetState extends ConsumerState<TransactionFormSheet> {
           : null;
       final initial = widget.initial;
       if (initial == null) {
-        await dao.addTransaction(
-          TransactionsCompanion.insert(
-            amountCents: _cents,
-            date: _date,
-            categoryId: categoryId,
-            description: description,
-            paymentMethod: Value(_paymentMethod),
-          ),
+        final entry = TransactionsCompanion.insert(
+          amountCents: _cents,
+          date: _date,
+          categoryId: categoryId,
+          description: description,
+          paymentMethod: Value(_paymentMethod),
         );
+        if (_repeatMonthly) {
+          await ref.read(recurrencesDaoProvider).addRepeating(entry);
+        } else {
+          await dao.addTransaction(entry);
+        }
       } else {
         await dao.updateTransaction(
           initial.transaction.copyWith(
@@ -300,6 +305,44 @@ class _TransactionFormSheetState extends ConsumerState<TransactionFormSheet> {
                     onSelected: (date) => setState(() => _date = date),
                     onPickOther: _pickDate,
                   ),
+                  if (!_isEditing)
+                    SwitchListTile(
+                      key: const Key('repeatMonthlySwitch'),
+                      contentPadding: EdgeInsets.zero,
+                      secondary: const Icon(Icons.event_repeat_rounded),
+                      value: _repeatMonthly,
+                      onChanged: (value) =>
+                          setState(() => _repeatMonthly = value),
+                      title: const Text('Repetir todo mês'),
+                      subtitle: Text(
+                        _repeatMonthly
+                            ? 'Lançado sozinho todo dia ${_date.day}'
+                            : 'Para salário, aluguel, assinaturas...',
+                      ),
+                    )
+                  else if (widget.initial!.transaction.recurrenceId != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.event_repeat_rounded,
+                            size: 18,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Lançamento fixo: mudanças aqui valem só para '
+                              'este mês.',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   const _SectionLabel('Forma de pagamento (opcional)'),
                   Wrap(
                     spacing: 8,
