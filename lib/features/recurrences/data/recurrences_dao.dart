@@ -37,10 +37,11 @@ class RecurrencesDao extends DatabaseAccessor<AppDatabase>
     );
   }
 
-  /// Cria uma recorrência pela tela de lançamentos fixos.
+  /// Cria uma recorrência pela tela de lançamentos fixos e já lança os
+  /// próximos meses.
   ///
   /// Se a data deste mês já passou, [includeCurrentMonth] decide se o
-  /// lançamento do mês atual sai agora ou se começa só no próximo.
+  /// lançamento do mês atual sai também ou se começa só no próximo.
   Future<int> createRecurrence({
     required int amountCents,
     required int categoryId,
@@ -51,11 +52,11 @@ class RecurrencesDao extends DatabaseAccessor<AppDatabase>
     DateTime? now,
   }) async {
     final today = now ?? DateTime.now();
-    final settled = RecurrenceSchedule.settledThrough(dayOfMonth, today);
     final current = YearMonth.fromDate(today);
-    final lastGenerated = includeCurrentMonth && settled == current
+    final settled = RecurrenceSchedule.settledThrough(dayOfMonth, today);
+    final lastGenerated = includeCurrentMonth || settled != current
         ? current.previous
-        : settled;
+        : current;
     final id = await into(recurrences).insert(
       RecurrencesCompanion.insert(
         amountCents: amountCents,
@@ -71,8 +72,7 @@ class RecurrencesDao extends DatabaseAccessor<AppDatabase>
   }
 
   /// Grava um lançamento e o transforma em fixo: ele é o primeiro, e os
-  /// próximos saem todo mês no mesmo dia. Se a data for de um mês passado,
-  /// os meses seguintes até hoje já são preenchidos.
+  /// próximos meses já ficam lançados no mesmo dia.
   Future<int> addRepeating(TransactionsCompanion entry, {DateTime? now}) async {
     final id = await transaction(() async {
       final date = entry.date.value;
@@ -94,51 +94,93 @@ class RecurrencesDao extends DatabaseAccessor<AppDatabase>
     return id;
   }
 
-  /// Atualiza valor, categoria, dia etc. Vale para os próximos meses; os
-  /// lançamentos já criados não mudam.
-  Future<void> updateRecurrence(Recurrence recurrence) =>
-      update(recurrences).replace(recurrence);
+  /// Apaga os lançamentos futuros (depois de hoje) de [recurrenceId] e
+  /// devolve o último mês que continua lançado — o ponto de onde a geração
+  /// recomeça.
+  Future<YearMonth> _dropFuture(int recurrenceId, DateTime today) async {
+    final cutoff = today.dateOnly.add(const Duration(days: 1));
+    await (delete(transactions)..where(
+          (t) =>
+              t.recurrenceId.equals(recurrenceId) &
+              t.date.isBiggerOrEqualValue(cutoff),
+        ))
+        .go();
+    final latest = transactions.date.max();
+    final row =
+        await (selectOnly(transactions)
+              ..addColumns([latest])
+              ..where(transactions.recurrenceId.equals(recurrenceId)))
+            .getSingle();
+    final kept = row.read(latest);
+    final floor = YearMonth.fromDate(today).previous;
+    if (kept == null) return floor;
+    final keptMonth = YearMonth.fromDate(kept);
+    return keptMonth.compareTo(floor) > 0 ? keptMonth : floor;
+  }
 
-  /// Pausar não apaga nada. Ao reativar, recomeça do próximo vencimento,
-  /// sem lançar para trás os meses em que ficou pausada.
-  Future<void> setActive(int id, {required bool active, DateTime? now}) =>
+  /// Atualiza valor, categoria, dia etc. Os lançamentos que já passaram não
+  /// mudam; os futuros são refeitos com os novos dados.
+  Future<void> updateRecurrence(Recurrence recurrence, {DateTime? now}) async {
+    final today = now ?? DateTime.now();
+    await transaction(() async {
+      final last = await _dropFuture(recurrence.id, today);
+      await update(
+        recurrences,
+      ).replace(recurrence.copyWith(lastGeneratedMonth: last.key));
+    });
+    await generateDue(now: today);
+  }
+
+  /// Pausar remove os lançamentos futuros (os passados ficam). Ao reativar,
+  /// recomeça do próximo vencimento, sem lançar para trás os meses em que
+  /// ficou pausada.
+  Future<void> setActive(int id, {required bool active, DateTime? now}) async {
+    final today = now ?? DateTime.now();
+    await transaction(() async {
+      final current = await (select(
+        recurrences,
+      )..where((r) => r.id.equals(id))).getSingle();
+      var last = current.lastGeneratedMonth;
+      if (!active) {
+        last = (await _dropFuture(id, today)).key;
+      } else if (!current.active) {
+        final settled = RecurrenceSchedule.settledThrough(
+          current.dayOfMonth,
+          today,
+        ).key;
+        if (settled > last) last = settled;
+      }
+      await (update(recurrences)..where((r) => r.id.equals(id))).write(
+        RecurrencesCompanion(
+          active: Value(active),
+          lastGeneratedMonth: Value(last),
+        ),
+      );
+    });
+    if (active) await generateDue(now: today);
+  }
+
+  /// Remove a recorrência e os lançamentos futuros dela; os que já passaram
+  /// continuam (desvinculados).
+  Future<void> deleteRecurrence(int id, {DateTime? now}) =>
       transaction(() async {
-        final current = await (select(
-          recurrences,
-        )..where((r) => r.id.equals(id))).getSingle();
-        var last = current.lastGeneratedMonth;
-        if (active && !current.active) {
-          final settled = RecurrenceSchedule.settledThrough(
-            current.dayOfMonth,
-            now ?? DateTime.now(),
-          ).key;
-          if (settled > last) last = settled;
-        }
-        await (update(recurrences)..where((r) => r.id.equals(id))).write(
-          RecurrencesCompanion(
-            active: Value(active),
-            lastGeneratedMonth: Value(last),
-          ),
-        );
+        await _dropFuture(id, now ?? DateTime.now());
+        await (delete(recurrences)..where((r) => r.id.equals(id))).go();
       });
 
-  /// Remove a recorrência; os lançamentos já feitos continuam.
-  Future<int> deleteRecurrence(int id) =>
-      (delete(recurrences)..where((r) => r.id.equals(id))).go();
-
-  /// Cria os lançamentos que já venceram e ainda não saíram. Chamado ao
-  /// abrir o app e ao voltar para ele. Devolve quantos foram criados.
+  /// Completa os lançamentos de cada recorrência ativa até
+  /// [RecurrenceSchedule.horizon]. Chamado ao abrir e ao voltar para o app.
+  /// Devolve quantos foram criados.
   Future<int> generateDue({DateTime? now}) => transaction(() async {
-    final today = now ?? DateTime.now();
+    final until = RecurrenceSchedule.horizon(now ?? DateTime.now());
     final active = await (select(
       recurrences,
     )..where((r) => r.active.equals(true))).get();
     var created = 0;
     for (final r in active) {
-      final months = RecurrenceSchedule.dueMonths(
+      final months = RecurrenceSchedule.pendingMonths(
         lastGenerated: YearMonth.fromKey(r.lastGeneratedMonth),
-        dayOfMonth: r.dayOfMonth,
-        today: today,
+        until: until,
       );
       if (months.isEmpty) continue;
       await batch((b) {

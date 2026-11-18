@@ -23,6 +23,7 @@ class BackupContents {
     required this.transactions,
     required this.budgets,
     required this.recurrences,
+    required this.installmentPlans,
     required this.exportedAt,
   });
 
@@ -30,6 +31,7 @@ class BackupContents {
   final List<Transaction> transactions;
   final List<Budget> budgets;
   final List<Recurrence> recurrences;
+  final List<InstallmentPlan> installmentPlans;
   final DateTime exportedAt;
 }
 
@@ -45,15 +47,17 @@ class BackupService {
 
   static const appId = 'desengastando';
 
-  /// 2: inclui `recurrences` (lançamentos fixos). Backups do formato 1
-  /// continuam sendo aceitos.
-  static const format = 2;
+  /// 2: inclui `recurrences` (lançamentos fixos).
+  /// 3: inclui `installmentPlans` (compras parceladas).
+  /// Backups de formatos anteriores continuam sendo aceitos.
+  static const format = 3;
 
   Future<String> exportJson({DateTime? now}) async {
     final categories = await _db.select(_db.categories).get();
     final transactions = await _db.select(_db.transactions).get();
     final budgets = await _db.select(_db.budgets).get();
     final recurrences = await _db.select(_db.recurrences).get();
+    final plans = await _db.select(_db.installmentPlans).get();
     final data = {
       'app': appId,
       'format': format,
@@ -63,6 +67,7 @@ class BackupService {
       'transactions': [for (final t in transactions) t.toJson()],
       'budgets': [for (final b in budgets) b.toJson()],
       'recurrences': [for (final r in recurrences) r.toJson()],
+      'installmentPlans': [for (final p in plans) p.toJson()],
     };
     return const JsonEncoder.withIndent('  ').convert(data);
   }
@@ -107,6 +112,12 @@ class BackupService {
                 for (final json in list('recurrences'))
                   Recurrence.fromJson(json),
               ],
+        installmentPlans: version < 3
+            ? const []
+            : [
+                for (final json in list('installmentPlans'))
+                  InstallmentPlan.fromJson(json),
+              ],
         exportedAt: DateTime.parse(decoded['exportedAt'] as String),
       );
     } on Object {
@@ -122,11 +133,13 @@ class BackupService {
     await _db.delete(_db.budgets).go();
     await _db.delete(_db.transactions).go();
     await _db.delete(_db.recurrences).go();
+    await _db.delete(_db.installmentPlans).go();
     await _db.delete(_db.categories).go();
     await _db.batch((b) {
       b
         ..insertAll(_db.categories, contents.categories)
         ..insertAll(_db.recurrences, contents.recurrences)
+        ..insertAll(_db.installmentPlans, contents.installmentPlans)
         ..insertAll(_db.transactions, contents.transactions)
         ..insertAll(_db.budgets, contents.budgets);
     });

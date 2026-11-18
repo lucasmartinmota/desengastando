@@ -53,6 +53,28 @@ class Transactions extends Table {
     #id,
     onDelete: KeyAction.setNull,
   )();
+
+  /// Compra parcelada a que esta parcela pertence (nulo se não for).
+  IntColumn get installmentPlanId => integer().nullable().references(
+    InstallmentPlans,
+    #id,
+    onDelete: KeyAction.setNull,
+  )();
+
+  /// Número desta parcela (1 = primeira), quando parcelada.
+  IntColumn get installmentNumber => integer().nullable()();
+}
+
+/// Compra parcelada: agrupa as parcelas, que são [Transactions] normais,
+/// uma por mês.
+class InstallmentPlans extends Table {
+  IntColumn get id => integer().autoIncrement()();
+
+  /// Quantidade total de parcelas.
+  IntColumn get count => integer().check(count.isBiggerOrEqualValue(2))();
+  IntColumn get totalCents =>
+      integer().check(totalCents.isBiggerThanValue(0))();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 }
 
 /// Lançamento fixo mensal (salário, aluguel, assinaturas...). Cada mês vira

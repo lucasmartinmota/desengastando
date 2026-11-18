@@ -49,6 +49,16 @@ void main() {
       description: 'Streaming',
       now: DateTime(2026, 11, 18),
     );
+    await db.transactionsDao.addInstallments(
+      TransactionsCompanion.insert(
+        amountCents: 0,
+        date: DateTime(2026, 11, 10),
+        categoryId: expense['Compras']!.id,
+        description: const Value('Geladeira'),
+      ),
+      count: 3,
+      totalCents: 300000,
+    );
   }
 
   test('exporta e restaura tudo, inclusive ids e arquivadas', () async {
@@ -73,7 +83,12 @@ void main() {
     expect(recurrence.description, 'Streaming');
     expect(
       transactions.where((t) => t.recurrenceId == recurrence.id),
-      hasLength(1),
+      hasLength(13),
+    );
+    final plan = (await other.select(other.installmentPlans).get()).single;
+    expect(
+      transactions.where((t) => t.installmentPlanId == plan.id),
+      hasLength(3),
     );
   });
 
@@ -81,13 +96,21 @@ void main() {
     await seed();
     final data = jsonDecode(await service.exportJson()) as Map<String, dynamic>
       ..['format'] = 1
-      ..remove('recurrences');
-    for (final t in data['transactions'] as List) {
-      (t as Map<String, dynamic>).remove('recurrenceId');
-    }
+      ..remove('recurrences')
+      ..remove('installmentPlans');
+    // Formato 1 não tinha fixos nem parcelas.
+    data['transactions'] = [
+      for (final t in data['transactions'] as List)
+        if ((t as Map<String, dynamic>)['recurrenceId'] == null &&
+            t['installmentPlanId'] == null)
+          t
+            ..remove('recurrenceId')
+            ..remove('installmentPlanId')
+            ..remove('installmentNumber'),
+    ];
     final contents = service.parse(jsonEncode(data));
     expect(contents.recurrences, isEmpty);
-    expect(contents.transactions, hasLength(2));
+    expect(contents.transactions, hasLength(1));
     await service.restore(contents);
   });
 
@@ -105,7 +128,7 @@ void main() {
       throwsA(isA<BackupFormatException>()),
     );
     expect(
-      () => service.parse(jsonEncode({'app': 'desengastando', 'format': 2})),
+      () => service.parse(jsonEncode({'app': 'desengastando', 'format': 3})),
       throwsA(isA<BackupFormatException>()),
     );
   });

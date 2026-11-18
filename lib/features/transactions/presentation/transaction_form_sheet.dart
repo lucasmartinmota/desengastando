@@ -2,6 +2,7 @@ import 'package:desengastando/app/theme/app_colors.dart';
 import 'package:desengastando/app/theme/app_theme.dart';
 import 'package:desengastando/core/date/year_month.dart';
 import 'package:desengastando/core/formatters/cents_input_formatter.dart';
+import 'package:desengastando/core/formatters/currency_formatter.dart';
 import 'package:desengastando/core/formatters/date_labels.dart';
 import 'package:desengastando/data/database/app_database.dart';
 import 'package:desengastando/features/budgets/data/budgets_providers.dart';
@@ -11,12 +12,16 @@ import 'package:desengastando/features/categories/presentation/category_form_she
 import 'package:desengastando/features/categories/presentation/category_icons.dart';
 import 'package:desengastando/features/recurrences/data/recurrences_providers.dart';
 import 'package:desengastando/features/transactions/data/transactions_providers.dart';
+import 'package:desengastando/features/transactions/domain/installments.dart';
 import 'package:desengastando/features/transactions/domain/payment_method.dart';
 import 'package:desengastando/features/transactions/domain/transaction_models.dart';
 import 'package:desengastando/features/transactions/domain/transaction_type.dart';
 import 'package:desengastando/features/transactions/presentation/delete_with_undo.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+/// Como o lançamento novo se repete.
+enum _Mode { single, fixed, installments }
 
 /// Formulário de lançamento em bottom sheet: criar (sem [initial]) ou editar.
 ///
@@ -52,7 +57,11 @@ class _TransactionFormSheetState extends ConsumerState<TransactionFormSheet> {
   int? _categoryId;
   late DateTime _date;
   PaymentMethod? _paymentMethod;
-  bool _repeatMonthly = false;
+  _Mode _mode = _Mode.single;
+  int _installmentCount = 2;
+
+  /// No parcelado: o valor digitado é o total (true) ou o de cada parcela.
+  bool _amountIsTotal = true;
   bool _saving = false;
 
   bool get _isEditing => widget.initial != null;
@@ -121,10 +130,17 @@ class _TransactionFormSheetState extends ConsumerState<TransactionFormSheet> {
           description: description,
           paymentMethod: Value(_paymentMethod),
         );
-        if (_repeatMonthly) {
-          await ref.read(recurrencesDaoProvider).addRepeating(entry);
-        } else {
-          await dao.addTransaction(entry);
+        switch (_mode) {
+          case _Mode.single:
+            await dao.addTransaction(entry);
+          case _Mode.fixed:
+            await ref.read(recurrencesDaoProvider).addRepeating(entry);
+          case _Mode.installments:
+            await dao.addInstallments(
+              entry,
+              count: _installmentCount,
+              totalCents: _installmentsTotal,
+            );
         }
       } else {
         await dao.updateTransaction(
@@ -165,7 +181,31 @@ class _TransactionFormSheetState extends ConsumerState<TransactionFormSheet> {
     }
   }
 
+  int get _installmentsTotal =>
+      _amountIsTotal ? _cents : _cents * _installmentCount;
+
+  /// "10x de R$ 120,00 · última em ago. de 2027"
+  String get _installmentsSummary {
+    final amounts = Installments.split(_installmentsTotal, _installmentCount);
+    final last = Installments.dates(_date, _installmentCount).last;
+    final each = amounts.toSet().length == 1
+        ? CurrencyFormatter.format(amounts.last)
+        : '${CurrencyFormatter.format(amounts.first)} + '
+              '${_installmentCount - 1}x de '
+              '${CurrencyFormatter.format(amounts.last)}';
+    final lastLabel = DateLabels.month(YearMonth.fromDate(last)).toLowerCase();
+    return amounts.toSet().length == 1
+        ? '${_installmentCount}x de $each · última em $lastLabel'
+        : '$each · última em $lastLabel';
+  }
+
   Future<void> _delete() async {
+    final transaction = widget.initial!.transaction;
+    final planId = transaction.installmentPlanId;
+    final number = transaction.installmentNumber;
+    if (planId != null && number != null) {
+      return _deleteInstallment(planId, number);
+    }
     final navigator = Navigator.of(context);
     await deleteTransactionWithUndo(
       messenger: ScaffoldMessenger.of(context),
@@ -173,6 +213,65 @@ class _TransactionFormSheetState extends ConsumerState<TransactionFormSheet> {
       transaction: widget.initial!.transaction,
     );
     navigator.pop();
+  }
+
+  /// Parcela: apagar só ela ou ela e as próximas (compra devolvida/quitada).
+  Future<void> _deleteInstallment(int planId, int number) async {
+    final plan = await ref
+        .read(transactionsDaoProvider)
+        .getInstallmentPlan(planId);
+    if (!mounted) return;
+    final count = plan?.count;
+    final choice = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+          count == null
+              ? 'Excluir parcela?'
+              : 'Excluir parcela $number de $count?',
+        ),
+        content: const Text(
+          'Se a compra foi devolvida ou quitada, dá para apagar também as '
+          'parcelas seguintes.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Só esta'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Esta e as próximas'),
+          ),
+        ],
+      ),
+    );
+    if (choice == null || !mounted) return;
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final dao = ref.read(transactionsDaoProvider);
+    if (choice) {
+      final removed = await dao.deleteInstallmentsFrom(planId, number);
+      navigator.pop();
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            removed == 1 ? '1 parcela excluída' : '$removed parcelas excluídas',
+          ),
+        ),
+      );
+    } else {
+      await deleteTransactionWithUndo(
+        messenger: messenger,
+        dao: dao,
+        transaction: widget.initial!.transaction,
+      );
+      navigator.pop();
+    }
   }
 
   /// Cria uma categoria sem sair do lançamento e já a deixa selecionada.
@@ -305,42 +404,106 @@ class _TransactionFormSheetState extends ConsumerState<TransactionFormSheet> {
                     onSelected: (date) => setState(() => _date = date),
                     onPickOther: _pickDate,
                   ),
-                  if (!_isEditing)
-                    SwitchListTile(
-                      key: const Key('repeatMonthlySwitch'),
-                      contentPadding: EdgeInsets.zero,
-                      secondary: const Icon(Icons.event_repeat_rounded),
-                      value: _repeatMonthly,
-                      onChanged: (value) =>
-                          setState(() => _repeatMonthly = value),
-                      title: const Text('Repetir todo mês'),
-                      subtitle: Text(
-                        _repeatMonthly
-                            ? 'Lançado sozinho todo dia ${_date.day}'
-                            : 'Para salário, aluguel, assinaturas...',
-                      ),
-                    )
-                  else if (widget.initial!.transaction.recurrenceId != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 12),
-                      child: Row(
+                  if (!_isEditing) ...[
+                    const _SectionLabel('Repetição'),
+                    SegmentedButton<_Mode>(
+                      key: const Key('modeSelector'),
+                      showSelectedIcon: false,
+                      segments: const [
+                        ButtonSegment(
+                          value: _Mode.single,
+                          label: Text('Único'),
+                        ),
+                        ButtonSegment(
+                          value: _Mode.fixed,
+                          icon: Icon(Icons.event_repeat_rounded),
+                          label: Text('Fixo'),
+                        ),
+                        ButtonSegment(
+                          value: _Mode.installments,
+                          icon: Icon(Icons.credit_card_rounded),
+                          label: Text('Parcelado'),
+                        ),
+                      ],
+                      selected: {_mode},
+                      onSelectionChanged: (selection) =>
+                          setState(() => _mode = selection.first),
+                    ),
+                    const SizedBox(height: 8),
+                    if (_mode == _Mode.fixed)
+                      _Hint(
+                        'Lançado todo dia ${_date.day}, já nos próximos '
+                        '12 meses. Gerencie em Lançamentos fixos.',
+                      )
+                    else if (_mode == _Mode.installments) ...[
+                      Row(
                         children: [
-                          Icon(
-                            Icons.event_repeat_rounded,
-                            size: 18,
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                          const SizedBox(width: 8),
                           Expanded(
-                            child: Text(
-                              'Lançamento fixo: mudanças aqui valem só para '
-                              'este mês.',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
+                            child: DropdownButtonFormField<int>(
+                              key: const Key('installmentCountField'),
+                              initialValue: _installmentCount,
+                              decoration: const InputDecoration(
+                                labelText: 'Parcelas',
+                              ),
+                              items: [
+                                for (
+                                  var n = Installments.minCount;
+                                  n <= Installments.maxCount;
+                                  n++
+                                )
+                                  DropdownMenuItem(
+                                    value: n,
+                                    child: Text('${n}x'),
+                                  ),
+                              ],
+                              onChanged: (n) => setState(
+                                () =>
+                                    _installmentCount = n ?? _installmentCount,
                               ),
                             ),
                           ),
+                          const SizedBox(width: 12),
+                          SegmentedButton<bool>(
+                            showSelectedIcon: false,
+                            segments: const [
+                              ButtonSegment(value: true, label: Text('Total')),
+                              ButtonSegment(
+                                value: false,
+                                label: Text('Parcela'),
+                              ),
+                            ],
+                            selected: {_amountIsTotal},
+                            onSelectionChanged: (selection) => setState(
+                              () => _amountIsTotal = selection.first,
+                            ),
+                          ),
                         ],
+                      ),
+                      const SizedBox(height: 8),
+                      _Hint(
+                        _cents == 0
+                            ? (_amountIsTotal
+                                  ? 'Digite o valor total da compra.'
+                                  : 'Digite o valor de cada parcela.')
+                            : _installmentsSummary,
+                      ),
+                    ],
+                  ] else if (widget.initial!.installmentLabel case final label?)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: _Hint(
+                        'Parcela $label: mudanças aqui valem só para esta '
+                        'parcela.',
+                        icon: Icons.credit_card_rounded,
+                      ),
+                    )
+                  else if (widget.initial!.transaction.recurrenceId != null)
+                    const Padding(
+                      padding: EdgeInsets.only(top: 12),
+                      child: _Hint(
+                        'Lançamento fixo: mudanças aqui valem só para este '
+                        'mês. Para mudar todos, use Lançamentos fixos.',
+                        icon: Icons.event_repeat_rounded,
                       ),
                     ),
                   const _SectionLabel('Forma de pagamento (opcional)'),
@@ -446,6 +609,32 @@ class _DateChips extends StatelessWidget {
           selected: isOther,
           onSelected: (_) => onPickOther(),
         ),
+      ],
+    );
+  }
+}
+
+/// Texto de apoio discreto, com ícone opcional.
+class _Hint extends StatelessWidget {
+  const _Hint(this.text, {this.icon});
+
+  final String text;
+  final IconData? icon;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final color = theme.colorScheme.onSurfaceVariant;
+    final label = Text(
+      text,
+      style: theme.textTheme.bodySmall?.copyWith(color: color),
+    );
+    if (icon == null) return label;
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: color),
+        const SizedBox(width: 8),
+        Expanded(child: label),
       ],
     );
   }

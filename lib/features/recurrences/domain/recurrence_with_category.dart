@@ -1,4 +1,3 @@
-import 'package:desengastando/core/date/year_month.dart';
 import 'package:desengastando/data/database/app_database.dart';
 import 'package:desengastando/features/recurrences/domain/recurrence_schedule.dart';
 import 'package:flutter/foundation.dart';
@@ -13,10 +12,10 @@ class RecurrenceWithCategory {
   final Recurrence recurrence;
   final TransactionCategory category;
 
-  /// Data do próximo lançamento que será criado.
-  DateTime get nextDate => RecurrenceSchedule.nextDate(
-    YearMonth.fromKey(recurrence.lastGeneratedMonth),
+  /// Data do próximo lançamento, a partir de hoje.
+  DateTime nextDate({DateTime? today}) => RecurrenceSchedule.nextDate(
     recurrence.dayOfMonth,
+    today ?? DateTime.now(),
   );
 
   @override

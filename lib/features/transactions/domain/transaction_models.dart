@@ -9,10 +9,25 @@ class TransactionWithCategory {
   const TransactionWithCategory({
     required this.transaction,
     required this.category,
+    this.installmentCount,
   });
 
   final Transaction transaction;
   final TransactionCategory category;
+
+  /// Total de parcelas, quando é parcela de uma compra parcelada.
+  final int? installmentCount;
+
+  /// `3/10` para a 3ª de 10 parcelas; `null` se não for parcela.
+  String? get installmentLabel {
+    final number = transaction.installmentNumber;
+    final count = installmentCount;
+    return number == null || count == null ? null : '$number/$count';
+  }
+
+  /// Data ainda não chegou (fixo ou parcela lançado com antecedência).
+  bool isScheduled({DateTime? today}) =>
+      transaction.date.isAfter((today ?? DateTime.now()).dateOnly);
 
   /// Valor com sinal: negativo para despesa, positivo para receita.
   int get signedCents => category.type == TransactionType.expense

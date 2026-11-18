@@ -9,7 +9,8 @@ import '../../helpers/test_database.dart';
 void main() {
   late AppDatabase db;
   late int salario;
-  late int aluguel;
+  late int moradia;
+  final today = DateTime(2026, 11, 18);
 
   setUp(() async {
     db = createTestDatabase();
@@ -21,7 +22,7 @@ void main() {
           (c) => c.name == 'Salário' && c.type == TransactionType.income,
         )
         .id;
-    aluguel = all.firstWhere((c) => c.name == 'Moradia').id;
+    moradia = all.firstWhere((c) => c.name == 'Moradia').id;
   });
   tearDown(() => db.close());
 
@@ -29,114 +30,122 @@ void main() {
     db.transactions,
   )..orderBy([(t) => OrderingTerm.asc(t.date)])).get();
 
-  test('addRepeating grava o primeiro e preenche até hoje', () async {
+  Future<int> rent({
+    int day = 10,
+    bool includeCurrentMonth = true,
+    DateTime? now,
+  }) => db.recurrencesDao.createRecurrence(
+    amountCents: 180000,
+    categoryId: moradia,
+    dayOfMonth: day,
+    includeCurrentMonth: includeCurrentMonth,
+    now: now ?? today,
+  );
+
+  test('addRepeating lança o primeiro e os 12 meses seguintes', () async {
     await db.recurrencesDao.addRepeating(
       TransactionsCompanion.insert(
         amountCents: 350000,
-        date: DateTime(2026, 9, 5),
+        date: DateTime(2026, 11, 5),
         categoryId: salario,
         description: const Value('Salário'),
         paymentMethod: const Value(PaymentMethod.bankTransfer),
       ),
-      now: DateTime(2026, 11, 18),
+      now: today,
     );
 
     final list = await transactions();
-    expect(list.map((t) => t.date), [
-      DateTime(2026, 9, 5),
-      DateTime(2026, 10, 5),
-      DateTime(2026, 11, 5),
-    ]);
+    expect(list, hasLength(13));
+    expect(list.first.date, DateTime(2026, 11, 5));
+    expect(list[2].date, DateTime(2027, 1, 5));
+    expect(list.last.date, DateTime(2027, 11, 5));
     expect(list.every((t) => t.recurrenceId != null), isTrue);
     expect(list.last.paymentMethod, PaymentMethod.bankTransfer);
   });
 
-  test('generateDue não duplica e respeita o dia', () async {
-    await db.recurrencesDao.createRecurrence(
-      amountCents: 180000,
-      categoryId: aluguel,
-      dayOfMonth: 20,
-      includeCurrentMonth: true,
-      now: DateTime(2026, 11, 18),
-    );
-    // Dia 20 ainda não chegou.
-    expect(await transactions(), isEmpty);
+  test('a janela anda com o tempo, sem duplicar', () async {
+    await rent();
+    expect(await transactions(), hasLength(13));
+    expect(await db.recurrencesDao.generateDue(now: today), 0);
 
-    expect(await db.recurrencesDao.generateDue(now: DateTime(2026, 11, 20)), 1);
-    expect(await db.recurrencesDao.generateDue(now: DateTime(2026, 11, 25)), 0);
-    expect(await transactions(), hasLength(1));
+    expect(
+      await db.recurrencesDao.generateDue(now: DateTime(2027, 1, 2)),
+      2,
+    );
+    expect((await transactions()).last.date, DateTime(2028, 1, 10));
   });
 
-  test('mês atual já vencido: lança agora só se pedir', () async {
-    await db.recurrencesDao.createRecurrence(
-      amountCents: 100,
-      categoryId: aluguel,
-      dayOfMonth: 5,
-      includeCurrentMonth: false,
-      now: DateTime(2026, 11, 18),
-    );
-    expect(await transactions(), isEmpty);
+  test('mês atual já vencido: entra só se pedir', () async {
+    await rent(day: 5, includeCurrentMonth: false);
+    expect((await transactions()).first.date, DateTime(2026, 12, 5));
+  });
 
-    await db.recurrencesDao.createRecurrence(
-      amountCents: 200,
-      categoryId: aluguel,
-      dayOfMonth: 5,
-      includeCurrentMonth: true,
-      now: DateTime(2026, 11, 18),
-    );
-    expect((await transactions()).single.amountCents, 200);
+  test('mês atual ainda por vir entra sempre', () async {
+    await rent(day: 25, includeCurrentMonth: false);
+    expect((await transactions()).first.date, DateTime(2026, 11, 25));
   });
 
   test('lançamento apagado não volta', () async {
-    await db.recurrencesDao.createRecurrence(
-      amountCents: 100,
-      categoryId: aluguel,
-      dayOfMonth: 1,
-      includeCurrentMonth: true,
-      now: DateTime(2026, 11, 18),
+    await rent();
+    final december = (await transactions())[1];
+    await db.transactionsDao.deleteTransaction(december.id);
+    await db.recurrencesDao.generateDue(now: DateTime(2026, 12, 20));
+    expect(
+      (await transactions()).where((t) => t.date == DateTime(2026, 12, 10)),
+      isEmpty,
     );
-    final generated = (await transactions()).single;
-    await db.transactionsDao.deleteTransaction(generated.id);
-
-    await db.recurrencesDao.generateDue(now: DateTime(2026, 11, 30));
-    expect(await transactions(), isEmpty);
   });
 
-  test('pausada não gera; ao reativar não lança para trás', () async {
-    final id = await db.recurrencesDao.createRecurrence(
-      amountCents: 100,
-      categoryId: aluguel,
-      dayOfMonth: 10,
-      includeCurrentMonth: false,
-      now: DateTime(2026, 9),
+  test('editar refaz só os futuros', () async {
+    final id = await rent();
+    final recurrence = await (db.select(
+      db.recurrences,
+    )..where((r) => r.id.equals(id))).getSingle();
+    await db.recurrencesDao.updateRecurrence(
+      recurrence.copyWith(amountCents: 200000, dayOfMonth: 15),
+      now: DateTime(2026, 12, 12),
     );
-    await db.recurrencesDao.setActive(id, active: false);
-    await db.recurrencesDao.generateDue(now: DateTime(2026, 11, 18));
-    expect(await transactions(), isEmpty);
+
+    final list = await transactions();
+    // Em 12/12 a janela vai até dez./2027: nov./2026 + 13 meses.
+    expect(list, hasLength(14));
+    // Novembro e dezembro (já passaram) ficam como estavam.
+    expect(list[0].amountCents, 180000);
+    expect(list[1].date, DateTime(2026, 12, 10));
+    expect(list[1].amountCents, 180000);
+    expect(list[2].date, DateTime(2027, 1, 15));
+    expect(list[2].amountCents, 200000);
+  });
+
+  test('pausar tira os futuros; reativar não lança para trás', () async {
+    final id = await rent();
+    await db.recurrencesDao.setActive(id, active: false, now: today);
+    // O de 10/11 já passou e fica; os futuros saem.
+    expect((await transactions()).single.date, DateTime(2026, 11, 10));
 
     await db.recurrencesDao.setActive(
       id,
       active: true,
-      now: DateTime(2026, 11, 18),
+      now: DateTime(2027, 2, 20),
     );
-    await db.recurrencesDao.generateDue(now: DateTime(2026, 11, 18));
-    expect(await transactions(), isEmpty);
-    await db.recurrencesDao.generateDue(now: DateTime(2026, 12, 10));
-    expect((await transactions()).single.date, DateTime(2026, 12, 10));
+    final after = [
+      for (final t in await transactions())
+        if (t.date.isAfter(DateTime(2026, 11, 30))) t.date,
+    ];
+    // Dez. a fev. ficaram pausados; volta em março, até fev./2028.
+    expect(after.first, DateTime(2027, 3, 10));
+    expect(after, hasLength(12));
   });
 
-  test('apagar a recorrência mantém os lançamentos feitos', () async {
-    final id = await db.recurrencesDao.createRecurrence(
-      amountCents: 100,
-      categoryId: aluguel,
-      dayOfMonth: 1,
-      includeCurrentMonth: true,
-      now: DateTime(2026, 11, 18),
-    );
-    await db.recurrencesDao.deleteRecurrence(id);
+  test('excluir mantém os que já passaram e apaga os futuros', () async {
+    final id = await rent();
+    await db.recurrencesDao.deleteRecurrence(id, now: DateTime(2026, 12, 15));
 
     final list = await transactions();
-    expect(list, hasLength(1));
-    expect(list.single.recurrenceId, isNull);
+    expect(list.map((t) => t.date), [
+      DateTime(2026, 11, 10),
+      DateTime(2026, 12, 10),
+    ]);
+    expect(list.every((t) => t.recurrenceId == null), isTrue);
   });
 }

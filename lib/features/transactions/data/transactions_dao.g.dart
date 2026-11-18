@@ -6,6 +6,8 @@ part of 'transactions_dao.dart';
 mixin _$TransactionsDaoMixin on DatabaseAccessor<AppDatabase> {
   $CategoriesTable get categories => attachedDatabase.categories;
   $RecurrencesTable get recurrences => attachedDatabase.recurrences;
+  $InstallmentPlansTable get installmentPlans =>
+      attachedDatabase.installmentPlans;
   $TransactionsTable get transactions => attachedDatabase.transactions;
   TransactionsDaoManager get managers => TransactionsDaoManager(this);
 }
@@ -17,6 +19,11 @@ class TransactionsDaoManager {
       $$CategoriesTableTableManager(_db.attachedDatabase, _db.categories);
   $$RecurrencesTableTableManager get recurrences =>
       $$RecurrencesTableTableManager(_db.attachedDatabase, _db.recurrences);
+  $$InstallmentPlansTableTableManager get installmentPlans =>
+      $$InstallmentPlansTableTableManager(
+        _db.attachedDatabase,
+        _db.installmentPlans,
+      );
   $$TransactionsTableTableManager get transactions =>
       $$TransactionsTableTableManager(_db.attachedDatabase, _db.transactions);
 }

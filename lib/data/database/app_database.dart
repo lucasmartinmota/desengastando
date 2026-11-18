@@ -15,7 +15,7 @@ export 'package:drift/drift.dart' show Value;
 part 'app_database.g.dart';
 
 @DriftDatabase(
-  tables: [Categories, Transactions, Budgets, Recurrences],
+  tables: [Categories, Transactions, Budgets, Recurrences, InstallmentPlans],
   daos: [CategoriesDao, TransactionsDao, BudgetsDao, RecurrencesDao],
 )
 class AppDatabase extends _$AppDatabase {
@@ -33,8 +33,10 @@ class AppDatabase extends _$AppDatabase {
 
   /// v2: lançamentos fixos (tabela `recurrences` e
   /// `transactions.recurrence_id`).
+  /// v3: compras parceladas (tabela `installment_plans`,
+  /// `transactions.installment_plan_id` e `installment_number`).
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -46,6 +48,11 @@ class AppDatabase extends _$AppDatabase {
       if (from < 2) {
         await m.createTable(recurrences);
         await m.addColumn(transactions, transactions.recurrenceId);
+      }
+      if (from < 3) {
+        await m.createTable(installmentPlans);
+        await m.addColumn(transactions, transactions.installmentPlanId);
+        await m.addColumn(transactions, transactions.installmentNumber);
       }
     },
     beforeOpen: (details) async {

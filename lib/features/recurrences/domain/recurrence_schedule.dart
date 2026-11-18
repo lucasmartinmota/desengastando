@@ -2,10 +2,22 @@ import 'package:desengastando/core/date/year_month.dart';
 
 /// Regras de calendário de um lançamento fixo mensal.
 ///
-/// O lançamento de cada mês só é criado quando a data dele chega (salário
-/// do dia 5 aparece no dia 5), para o saldo do mês não contar dinheiro que
-/// ainda não entrou nem conta que ainda não venceu.
+/// Os lançamentos ficam criados com antecedência ([monthsAhead] meses à
+/// frente), para os meses futuros já mostrarem salário, aluguel etc. A
+/// janela anda sozinha: a cada abertura do app, completa até o novo limite.
 abstract final class RecurrenceSchedule {
+  /// Quantos meses depois do atual ficam lançados.
+  static const monthsAhead = 12;
+
+  /// Último mês que deve estar lançado, contando a partir de [today].
+  static YearMonth horizon(DateTime today) {
+    var month = YearMonth.fromDate(today);
+    for (var i = 0; i < monthsAhead; i++) {
+      month = month.next;
+    }
+    return month;
+  }
+
   /// Data do lançamento em [month]. Dias que o mês não tem viram o último
   /// dia (dia 31 em fevereiro → 28 ou 29).
   static DateTime dueDate(YearMonth month, int dayOfMonth) => DateTime(
@@ -14,23 +26,19 @@ abstract final class RecurrenceSchedule {
     dayOfMonth.clamp(1, month.daysInMonth),
   );
 
-  /// Meses depois de [lastGenerated] cuja data já chegou até [today],
-  /// do mais antigo ao mais recente (preenche meses em que o app não abriu).
-  static List<YearMonth> dueMonths({
+  /// Meses depois de [lastGenerated] até [until] (inclusive), do mais antigo
+  /// ao mais recente.
+  static List<YearMonth> pendingMonths({
     required YearMonth lastGenerated,
-    required int dayOfMonth,
-    required DateTime today,
-  }) {
-    final limit = today.dateOnly;
-    return [
-      for (
-        var month = lastGenerated.next;
-        !dueDate(month, dayOfMonth).isAfter(limit);
-        month = month.next
-      )
-        month,
-    ];
-  }
+    required YearMonth until,
+  }) => [
+    for (
+      var month = lastGenerated.next;
+      month.compareTo(until) <= 0;
+      month = month.next
+    )
+      month,
+  ];
 
   /// Último mês que conta como "já resolvido" ao (re)ativar uma recorrência
   /// sem lançar nada para trás: o mês atual se a data dele já passou, senão
@@ -42,7 +50,12 @@ abstract final class RecurrenceSchedule {
         : current;
   }
 
-  /// Próxima data do lançamento depois de [lastGenerated].
-  static DateTime nextDate(YearMonth lastGenerated, int dayOfMonth) =>
-      dueDate(lastGenerated.next, dayOfMonth);
+  /// Próxima data do lançamento a partir de hoje (inclusive).
+  static DateTime nextDate(int dayOfMonth, DateTime today) {
+    final current = YearMonth.fromDate(today);
+    final thisMonth = dueDate(current, dayOfMonth);
+    return thisMonth.isBefore(today.dateOnly)
+        ? dueDate(current.next, dayOfMonth)
+        : thisMonth;
+  }
 }

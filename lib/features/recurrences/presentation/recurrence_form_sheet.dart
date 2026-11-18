@@ -327,7 +327,7 @@ class _RecurrenceFormSheetState extends ConsumerState<RecurrenceFormSheet> {
                         paused
                             ? 'Pausado: nada é lançado até reativar.'
                             : 'Próximo: '
-                                  '${DateLabels.day(widget.initial!.nextDate)}',
+                                  '${DateLabels.day(widget.initial!.nextDate())}',
                       ),
                     ),
                   const _SectionLabel('Forma de pagamento (opcional)'),

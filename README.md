@@ -20,7 +20,8 @@ v0.1 — pronto para uso pessoal. Roadmap concluído:
 - **Lançamentos** rápidos (valor já focado, "Hoje" pré-selecionado), com edição, exclusão por gesto e desfazer
 - **Resumo do mês**: saldo, comparação com o mês anterior, gastos por categoria e evolução de 6 meses
 - **Categorias** personalizáveis (cor, ícone, ordem), arquivadas sem perder o histórico
-- **Lançamentos fixos** (salário, aluguel, assinaturas): cadastre uma vez e o app lança sozinho todo mês, no dia certo
+- **Lançamentos fixos** (salário, aluguel, assinaturas): cadastre uma vez e os próximos 12 meses já aparecem lançados, como previstos
+- **Compras parceladas**: informe o total (ou o valor da parcela) e a quantidade, e cada parcela entra no seu mês ("Parcela 3/10")
 - **Orçamentos** mensais por categoria, com aviso a partir de 80% e ao estourar
 - **Backup** completo em JSON (exportar/restaurar) e **planilha CSV** dos lançamentos
 

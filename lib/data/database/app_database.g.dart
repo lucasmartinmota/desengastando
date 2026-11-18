@@ -1062,6 +1062,308 @@ class RecurrencesCompanion extends UpdateCompanion<Recurrence> {
   }
 }
 
+class $InstallmentPlansTable extends InstallmentPlans
+    with TableInfo<$InstallmentPlansTable, InstallmentPlan> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $InstallmentPlansTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _countMeta = const VerificationMeta('count');
+  @override
+  late final GeneratedColumn<int> count = GeneratedColumn<int>(
+    'count',
+    aliasedName,
+    false,
+    check: () => ComparableExpr(count).isBiggerOrEqualValue(2),
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _totalCentsMeta = const VerificationMeta(
+    'totalCents',
+  );
+  @override
+  late final GeneratedColumn<int> totalCents = GeneratedColumn<int>(
+    'total_cents',
+    aliasedName,
+    false,
+    check: () => ComparableExpr(totalCents).isBiggerThanValue(0),
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, count, totalCents, createdAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'installment_plans';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<InstallmentPlan> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('count')) {
+      context.handle(
+        _countMeta,
+        count.isAcceptableOrUnknown(data['count']!, _countMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_countMeta);
+    }
+    if (data.containsKey('total_cents')) {
+      context.handle(
+        _totalCentsMeta,
+        totalCents.isAcceptableOrUnknown(data['total_cents']!, _totalCentsMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_totalCentsMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  InstallmentPlan map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return InstallmentPlan(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      count: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}count'],
+      )!,
+      totalCents: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}total_cents'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $InstallmentPlansTable createAlias(String alias) {
+    return $InstallmentPlansTable(attachedDatabase, alias);
+  }
+}
+
+class InstallmentPlan extends DataClass implements Insertable<InstallmentPlan> {
+  final int id;
+
+  /// Quantidade total de parcelas.
+  final int count;
+  final int totalCents;
+  final DateTime createdAt;
+  const InstallmentPlan({
+    required this.id,
+    required this.count,
+    required this.totalCents,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['count'] = Variable<int>(count);
+    map['total_cents'] = Variable<int>(totalCents);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  InstallmentPlansCompanion toCompanion(bool nullToAbsent) {
+    return InstallmentPlansCompanion(
+      id: Value(id),
+      count: Value(count),
+      totalCents: Value(totalCents),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory InstallmentPlan.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return InstallmentPlan(
+      id: serializer.fromJson<int>(json['id']),
+      count: serializer.fromJson<int>(json['count']),
+      totalCents: serializer.fromJson<int>(json['totalCents']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'count': serializer.toJson<int>(count),
+      'totalCents': serializer.toJson<int>(totalCents),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  InstallmentPlan copyWith({
+    int? id,
+    int? count,
+    int? totalCents,
+    DateTime? createdAt,
+  }) => InstallmentPlan(
+    id: id ?? this.id,
+    count: count ?? this.count,
+    totalCents: totalCents ?? this.totalCents,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  InstallmentPlan copyWithCompanion(InstallmentPlansCompanion data) {
+    return InstallmentPlan(
+      id: data.id.present ? data.id.value : this.id,
+      count: data.count.present ? data.count.value : this.count,
+      totalCents: data.totalCents.present
+          ? data.totalCents.value
+          : this.totalCents,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('InstallmentPlan(')
+          ..write('id: $id, ')
+          ..write('count: $count, ')
+          ..write('totalCents: $totalCents, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, count, totalCents, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is InstallmentPlan &&
+          other.id == this.id &&
+          other.count == this.count &&
+          other.totalCents == this.totalCents &&
+          other.createdAt == this.createdAt);
+}
+
+class InstallmentPlansCompanion extends UpdateCompanion<InstallmentPlan> {
+  final Value<int> id;
+  final Value<int> count;
+  final Value<int> totalCents;
+  final Value<DateTime> createdAt;
+  const InstallmentPlansCompanion({
+    this.id = const Value.absent(),
+    this.count = const Value.absent(),
+    this.totalCents = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  });
+  InstallmentPlansCompanion.insert({
+    this.id = const Value.absent(),
+    required int count,
+    required int totalCents,
+    this.createdAt = const Value.absent(),
+  }) : count = Value(count),
+       totalCents = Value(totalCents);
+  static Insertable<InstallmentPlan> custom({
+    Expression<int>? id,
+    Expression<int>? count,
+    Expression<int>? totalCents,
+    Expression<DateTime>? createdAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (count != null) 'count': count,
+      if (totalCents != null) 'total_cents': totalCents,
+      if (createdAt != null) 'created_at': createdAt,
+    });
+  }
+
+  InstallmentPlansCompanion copyWith({
+    Value<int>? id,
+    Value<int>? count,
+    Value<int>? totalCents,
+    Value<DateTime>? createdAt,
+  }) {
+    return InstallmentPlansCompanion(
+      id: id ?? this.id,
+      count: count ?? this.count,
+      totalCents: totalCents ?? this.totalCents,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (count.present) {
+      map['count'] = Variable<int>(count.value);
+    }
+    if (totalCents.present) {
+      map['total_cents'] = Variable<int>(totalCents.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('InstallmentPlansCompanion(')
+          ..write('id: $id, ')
+          ..write('count: $count, ')
+          ..write('totalCents: $totalCents, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $TransactionsTable extends Transactions
     with TableInfo<$TransactionsTable, Transaction> {
   @override
@@ -1163,6 +1465,31 @@ class $TransactionsTable extends Transactions
       'REFERENCES recurrences (id) ON DELETE SET NULL',
     ),
   );
+  static const VerificationMeta _installmentPlanIdMeta = const VerificationMeta(
+    'installmentPlanId',
+  );
+  @override
+  late final GeneratedColumn<int> installmentPlanId = GeneratedColumn<int>(
+    'installment_plan_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES installment_plans (id) ON DELETE SET NULL',
+    ),
+  );
+  static const VerificationMeta _installmentNumberMeta = const VerificationMeta(
+    'installmentNumber',
+  );
+  @override
+  late final GeneratedColumn<int> installmentNumber = GeneratedColumn<int>(
+    'installment_number',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -1173,6 +1500,8 @@ class $TransactionsTable extends Transactions
     paymentMethod,
     createdAt,
     recurrenceId,
+    installmentPlanId,
+    installmentNumber,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1240,6 +1569,24 @@ class $TransactionsTable extends Transactions
         ),
       );
     }
+    if (data.containsKey('installment_plan_id')) {
+      context.handle(
+        _installmentPlanIdMeta,
+        installmentPlanId.isAcceptableOrUnknown(
+          data['installment_plan_id']!,
+          _installmentPlanIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('installment_number')) {
+      context.handle(
+        _installmentNumberMeta,
+        installmentNumber.isAcceptableOrUnknown(
+          data['installment_number']!,
+          _installmentNumberMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -1283,6 +1630,14 @@ class $TransactionsTable extends Transactions
         DriftSqlType.int,
         data['${effectivePrefix}recurrence_id'],
       ),
+      installmentPlanId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}installment_plan_id'],
+      ),
+      installmentNumber: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}installment_number'],
+      ),
     );
   }
 
@@ -1317,6 +1672,12 @@ class Transaction extends DataClass implements Insertable<Transaction> {
   /// Lançamento fixo que gerou este (nulo nos lançados à mão). Apagar a
   /// recorrência mantém os lançamentos já feitos.
   final int? recurrenceId;
+
+  /// Compra parcelada a que esta parcela pertence (nulo se não for).
+  final int? installmentPlanId;
+
+  /// Número desta parcela (1 = primeira), quando parcelada.
+  final int? installmentNumber;
   const Transaction({
     required this.id,
     required this.amountCents,
@@ -1326,6 +1687,8 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     this.paymentMethod,
     required this.createdAt,
     this.recurrenceId,
+    this.installmentPlanId,
+    this.installmentNumber,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1346,6 +1709,12 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     if (!nullToAbsent || recurrenceId != null) {
       map['recurrence_id'] = Variable<int>(recurrenceId);
     }
+    if (!nullToAbsent || installmentPlanId != null) {
+      map['installment_plan_id'] = Variable<int>(installmentPlanId);
+    }
+    if (!nullToAbsent || installmentNumber != null) {
+      map['installment_number'] = Variable<int>(installmentNumber);
+    }
     return map;
   }
 
@@ -1365,6 +1734,12 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       recurrenceId: recurrenceId == null && nullToAbsent
           ? const Value.absent()
           : Value(recurrenceId),
+      installmentPlanId: installmentPlanId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(installmentPlanId),
+      installmentNumber: installmentNumber == null && nullToAbsent
+          ? const Value.absent()
+          : Value(installmentNumber),
     );
   }
 
@@ -1384,6 +1759,8 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       ),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       recurrenceId: serializer.fromJson<int?>(json['recurrenceId']),
+      installmentPlanId: serializer.fromJson<int?>(json['installmentPlanId']),
+      installmentNumber: serializer.fromJson<int?>(json['installmentNumber']),
     );
   }
   @override
@@ -1400,6 +1777,8 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       ),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'recurrenceId': serializer.toJson<int?>(recurrenceId),
+      'installmentPlanId': serializer.toJson<int?>(installmentPlanId),
+      'installmentNumber': serializer.toJson<int?>(installmentNumber),
     };
   }
 
@@ -1412,6 +1791,8 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     Value<PaymentMethod?> paymentMethod = const Value.absent(),
     DateTime? createdAt,
     Value<int?> recurrenceId = const Value.absent(),
+    Value<int?> installmentPlanId = const Value.absent(),
+    Value<int?> installmentNumber = const Value.absent(),
   }) => Transaction(
     id: id ?? this.id,
     amountCents: amountCents ?? this.amountCents,
@@ -1423,6 +1804,12 @@ class Transaction extends DataClass implements Insertable<Transaction> {
         : this.paymentMethod,
     createdAt: createdAt ?? this.createdAt,
     recurrenceId: recurrenceId.present ? recurrenceId.value : this.recurrenceId,
+    installmentPlanId: installmentPlanId.present
+        ? installmentPlanId.value
+        : this.installmentPlanId,
+    installmentNumber: installmentNumber.present
+        ? installmentNumber.value
+        : this.installmentNumber,
   );
   Transaction copyWithCompanion(TransactionsCompanion data) {
     return Transaction(
@@ -1444,6 +1831,12 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       recurrenceId: data.recurrenceId.present
           ? data.recurrenceId.value
           : this.recurrenceId,
+      installmentPlanId: data.installmentPlanId.present
+          ? data.installmentPlanId.value
+          : this.installmentPlanId,
+      installmentNumber: data.installmentNumber.present
+          ? data.installmentNumber.value
+          : this.installmentNumber,
     );
   }
 
@@ -1457,7 +1850,9 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           ..write('description: $description, ')
           ..write('paymentMethod: $paymentMethod, ')
           ..write('createdAt: $createdAt, ')
-          ..write('recurrenceId: $recurrenceId')
+          ..write('recurrenceId: $recurrenceId, ')
+          ..write('installmentPlanId: $installmentPlanId, ')
+          ..write('installmentNumber: $installmentNumber')
           ..write(')'))
         .toString();
   }
@@ -1472,6 +1867,8 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     paymentMethod,
     createdAt,
     recurrenceId,
+    installmentPlanId,
+    installmentNumber,
   );
   @override
   bool operator ==(Object other) =>
@@ -1484,7 +1881,9 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           other.description == this.description &&
           other.paymentMethod == this.paymentMethod &&
           other.createdAt == this.createdAt &&
-          other.recurrenceId == this.recurrenceId);
+          other.recurrenceId == this.recurrenceId &&
+          other.installmentPlanId == this.installmentPlanId &&
+          other.installmentNumber == this.installmentNumber);
 }
 
 class TransactionsCompanion extends UpdateCompanion<Transaction> {
@@ -1496,6 +1895,8 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
   final Value<PaymentMethod?> paymentMethod;
   final Value<DateTime> createdAt;
   final Value<int?> recurrenceId;
+  final Value<int?> installmentPlanId;
+  final Value<int?> installmentNumber;
   const TransactionsCompanion({
     this.id = const Value.absent(),
     this.amountCents = const Value.absent(),
@@ -1505,6 +1906,8 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     this.paymentMethod = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.recurrenceId = const Value.absent(),
+    this.installmentPlanId = const Value.absent(),
+    this.installmentNumber = const Value.absent(),
   });
   TransactionsCompanion.insert({
     this.id = const Value.absent(),
@@ -1515,6 +1918,8 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     this.paymentMethod = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.recurrenceId = const Value.absent(),
+    this.installmentPlanId = const Value.absent(),
+    this.installmentNumber = const Value.absent(),
   }) : amountCents = Value(amountCents),
        date = Value(date),
        categoryId = Value(categoryId);
@@ -1527,6 +1932,8 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     Expression<String>? paymentMethod,
     Expression<DateTime>? createdAt,
     Expression<int>? recurrenceId,
+    Expression<int>? installmentPlanId,
+    Expression<int>? installmentNumber,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -1537,6 +1944,8 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
       if (paymentMethod != null) 'payment_method': paymentMethod,
       if (createdAt != null) 'created_at': createdAt,
       if (recurrenceId != null) 'recurrence_id': recurrenceId,
+      if (installmentPlanId != null) 'installment_plan_id': installmentPlanId,
+      if (installmentNumber != null) 'installment_number': installmentNumber,
     });
   }
 
@@ -1549,6 +1958,8 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     Value<PaymentMethod?>? paymentMethod,
     Value<DateTime>? createdAt,
     Value<int?>? recurrenceId,
+    Value<int?>? installmentPlanId,
+    Value<int?>? installmentNumber,
   }) {
     return TransactionsCompanion(
       id: id ?? this.id,
@@ -1559,6 +1970,8 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
       paymentMethod: paymentMethod ?? this.paymentMethod,
       createdAt: createdAt ?? this.createdAt,
       recurrenceId: recurrenceId ?? this.recurrenceId,
+      installmentPlanId: installmentPlanId ?? this.installmentPlanId,
+      installmentNumber: installmentNumber ?? this.installmentNumber,
     );
   }
 
@@ -1591,6 +2004,12 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     if (recurrenceId.present) {
       map['recurrence_id'] = Variable<int>(recurrenceId.value);
     }
+    if (installmentPlanId.present) {
+      map['installment_plan_id'] = Variable<int>(installmentPlanId.value);
+    }
+    if (installmentNumber.present) {
+      map['installment_number'] = Variable<int>(installmentNumber.value);
+    }
     return map;
   }
 
@@ -1604,7 +2023,9 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
           ..write('description: $description, ')
           ..write('paymentMethod: $paymentMethod, ')
           ..write('createdAt: $createdAt, ')
-          ..write('recurrenceId: $recurrenceId')
+          ..write('recurrenceId: $recurrenceId, ')
+          ..write('installmentPlanId: $installmentPlanId, ')
+          ..write('installmentNumber: $installmentNumber')
           ..write(')'))
         .toString();
   }
@@ -1822,6 +2243,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $CategoriesTable categories = $CategoriesTable(this);
   late final $RecurrencesTable recurrences = $RecurrencesTable(this);
+  late final $InstallmentPlansTable installmentPlans = $InstallmentPlansTable(
+    this,
+  );
   late final $TransactionsTable transactions = $TransactionsTable(this);
   late final $BudgetsTable budgets = $BudgetsTable(this);
   late final CategoriesDao categoriesDao = CategoriesDao(this as AppDatabase);
@@ -1839,6 +2263,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   List<DatabaseSchemaEntity> get allSchemaEntities => [
     categories,
     recurrences,
+    installmentPlans,
     transactions,
     budgets,
   ];
@@ -1847,6 +2272,13 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     WritePropagation(
       on: TableUpdateQuery.onTableName(
         'recurrences',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('transactions', kind: UpdateKind.update)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'installment_plans',
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('transactions', kind: UpdateKind.update)],
@@ -2884,6 +3316,292 @@ typedef $$RecurrencesTableProcessedTableManager =
       Recurrence,
       PrefetchHooks Function({bool categoryId, bool transactionsRefs})
     >;
+typedef $$InstallmentPlansTableCreateCompanionBuilder =
+    InstallmentPlansCompanion Function({
+      Value<int> id,
+      required int count,
+      required int totalCents,
+      Value<DateTime> createdAt,
+    });
+typedef $$InstallmentPlansTableUpdateCompanionBuilder =
+    InstallmentPlansCompanion Function({
+      Value<int> id,
+      Value<int> count,
+      Value<int> totalCents,
+      Value<DateTime> createdAt,
+    });
+
+final class $$InstallmentPlansTableReferences
+    extends
+        BaseReferences<_$AppDatabase, $InstallmentPlansTable, InstallmentPlan> {
+  $$InstallmentPlansTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static MultiTypedResultKey<$TransactionsTable, List<Transaction>>
+  _transactionsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.transactions,
+    aliasName: 'installment_plans__id__transactions__installment_plan_id',
+  );
+
+  $$TransactionsTableProcessedTableManager get transactionsRefs {
+    final manager = $$TransactionsTableTableManager(
+      $_db,
+      $_db.transactions,
+    ).filter((f) => f.installmentPlanId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_transactionsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
+class $$InstallmentPlansTableFilterComposer
+    extends Composer<_$AppDatabase, $InstallmentPlansTable> {
+  $$InstallmentPlansTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get count => $composableBuilder(
+    column: $table.count,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get totalCents => $composableBuilder(
+    column: $table.totalCents,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  Expression<bool> transactionsRefs(
+    Expression<bool> Function($$TransactionsTableFilterComposer f) f,
+  ) {
+    final $$TransactionsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.transactions,
+      getReferencedColumn: (t) => t.installmentPlanId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TransactionsTableFilterComposer(
+            $db: $db,
+            $table: $db.transactions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$InstallmentPlansTableOrderingComposer
+    extends Composer<_$AppDatabase, $InstallmentPlansTable> {
+  $$InstallmentPlansTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get count => $composableBuilder(
+    column: $table.count,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get totalCents => $composableBuilder(
+    column: $table.totalCents,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$InstallmentPlansTableAnnotationComposer
+    extends Composer<_$AppDatabase, $InstallmentPlansTable> {
+  $$InstallmentPlansTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get count =>
+      $composableBuilder(column: $table.count, builder: (column) => column);
+
+  GeneratedColumn<int> get totalCents => $composableBuilder(
+    column: $table.totalCents,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  Expression<T> transactionsRefs<T extends Object>(
+    Expression<T> Function($$TransactionsTableAnnotationComposer a) f,
+  ) {
+    final $$TransactionsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.transactions,
+      getReferencedColumn: (t) => t.installmentPlanId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$TransactionsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.transactions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$InstallmentPlansTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $InstallmentPlansTable,
+          InstallmentPlan,
+          $$InstallmentPlansTableFilterComposer,
+          $$InstallmentPlansTableOrderingComposer,
+          $$InstallmentPlansTableAnnotationComposer,
+          $$InstallmentPlansTableCreateCompanionBuilder,
+          $$InstallmentPlansTableUpdateCompanionBuilder,
+          (InstallmentPlan, $$InstallmentPlansTableReferences),
+          InstallmentPlan,
+          PrefetchHooks Function({bool transactionsRefs})
+        > {
+  $$InstallmentPlansTableTableManager(
+    _$AppDatabase db,
+    $InstallmentPlansTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$InstallmentPlansTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$InstallmentPlansTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$InstallmentPlansTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> count = const Value.absent(),
+                Value<int> totalCents = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => InstallmentPlansCompanion(
+                id: id,
+                count: count,
+                totalCents: totalCents,
+                createdAt: createdAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int count,
+                required int totalCents,
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => InstallmentPlansCompanion.insert(
+                id: id,
+                count: count,
+                totalCents: totalCents,
+                createdAt: createdAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$InstallmentPlansTable, InstallmentPlan>(table),
+                  $$InstallmentPlansTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({transactionsRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [if (transactionsRefs) db.transactions],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (transactionsRefs)
+                    await $_getPrefetchedDataByColumns<
+                      InstallmentPlan,
+                      $InstallmentPlansTable,
+                      Transaction,
+                      $TransactionsTable
+                    >(
+                      currentTable: table,
+                      referencedTable: $$InstallmentPlansTableReferences
+                          ._transactionsRefsTable(db),
+                      managerFromTypedResult: (p0) =>
+                          $$InstallmentPlansTableReferences(
+                            db,
+                            table,
+                            p0,
+                          ).transactionsRefs,
+                      currentColumn: 'id',
+                      referencedColumn: 'installment_plan_id',
+                      typedResults: items,
+                    ),
+                ];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$InstallmentPlansTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $InstallmentPlansTable,
+      InstallmentPlan,
+      $$InstallmentPlansTableFilterComposer,
+      $$InstallmentPlansTableOrderingComposer,
+      $$InstallmentPlansTableAnnotationComposer,
+      $$InstallmentPlansTableCreateCompanionBuilder,
+      $$InstallmentPlansTableUpdateCompanionBuilder,
+      (InstallmentPlan, $$InstallmentPlansTableReferences),
+      InstallmentPlan,
+      PrefetchHooks Function({bool transactionsRefs})
+    >;
 typedef $$TransactionsTableCreateCompanionBuilder =
     TransactionsCompanion Function({
       Value<int> id,
@@ -2894,6 +3612,8 @@ typedef $$TransactionsTableCreateCompanionBuilder =
       Value<PaymentMethod?> paymentMethod,
       Value<DateTime> createdAt,
       Value<int?> recurrenceId,
+      Value<int?> installmentPlanId,
+      Value<int?> installmentNumber,
     });
 typedef $$TransactionsTableUpdateCompanionBuilder =
     TransactionsCompanion Function({
@@ -2905,6 +3625,8 @@ typedef $$TransactionsTableUpdateCompanionBuilder =
       Value<PaymentMethod?> paymentMethod,
       Value<DateTime> createdAt,
       Value<int?> recurrenceId,
+      Value<int?> installmentPlanId,
+      Value<int?> installmentNumber,
     });
 
 final class $$TransactionsTableReferences
@@ -2940,6 +3662,24 @@ final class $$TransactionsTableReferences
       $_db.recurrences,
     ).filter((f) => f.id.sqlEquals($_column));
     final item = $_typedResult.readTableOrNull(_recurrenceIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static $InstallmentPlansTable _installmentPlanIdTable(_$AppDatabase db) => db
+      .installmentPlans
+      .createAlias('transactions__installment_plan_id__installment_plans__id');
+
+  $$InstallmentPlansTableProcessedTableManager? get installmentPlanId {
+    final $_column = $_itemColumn<int>('installment_plan_id');
+    if ($_column == null) return null;
+    final manager = $$InstallmentPlansTableTableManager(
+      $_db,
+      $_db.installmentPlans,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_installmentPlanIdTable($_db));
     if (item == null) return manager;
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: [item]),
@@ -2987,6 +3727,11 @@ class $$TransactionsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<int> get installmentNumber => $composableBuilder(
+    column: $table.installmentNumber,
+    builder: (column) => ColumnFilters(column),
+  );
+
   $$CategoriesTableFilterComposer get categoryId {
     final $$CategoriesTableFilterComposer composer = $composerBuilder(
       composer: this,
@@ -3024,6 +3769,29 @@ class $$TransactionsTableFilterComposer
           }) => $$RecurrencesTableFilterComposer(
             $db: $db,
             $table: $db.recurrences,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$InstallmentPlansTableFilterComposer get installmentPlanId {
+    final $$InstallmentPlansTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.installmentPlanId,
+      referencedTable: $db.installmentPlans,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$InstallmentPlansTableFilterComposer(
+            $db: $db,
+            $table: $db.installmentPlans,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -3073,6 +3841,11 @@ class $$TransactionsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get installmentNumber => $composableBuilder(
+    column: $table.installmentNumber,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$CategoriesTableOrderingComposer get categoryId {
     final $$CategoriesTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -3118,6 +3891,29 @@ class $$TransactionsTableOrderingComposer
     );
     return composer;
   }
+
+  $$InstallmentPlansTableOrderingComposer get installmentPlanId {
+    final $$InstallmentPlansTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.installmentPlanId,
+      referencedTable: $db.installmentPlans,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$InstallmentPlansTableOrderingComposer(
+            $db: $db,
+            $table: $db.installmentPlans,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$TransactionsTableAnnotationComposer
@@ -3153,6 +3949,11 @@ class $$TransactionsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<int> get installmentNumber => $composableBuilder(
+    column: $table.installmentNumber,
+    builder: (column) => column,
+  );
 
   $$CategoriesTableAnnotationComposer get categoryId {
     final $$CategoriesTableAnnotationComposer composer = $composerBuilder(
@@ -3199,6 +4000,29 @@ class $$TransactionsTableAnnotationComposer
     );
     return composer;
   }
+
+  $$InstallmentPlansTableAnnotationComposer get installmentPlanId {
+    final $$InstallmentPlansTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.installmentPlanId,
+      referencedTable: $db.installmentPlans,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$InstallmentPlansTableAnnotationComposer(
+            $db: $db,
+            $table: $db.installmentPlans,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$TransactionsTableTableManager
@@ -3214,7 +4038,11 @@ class $$TransactionsTableTableManager
           $$TransactionsTableUpdateCompanionBuilder,
           (Transaction, $$TransactionsTableReferences),
           Transaction,
-          PrefetchHooks Function({bool categoryId, bool recurrenceId})
+          PrefetchHooks Function({
+            bool categoryId,
+            bool recurrenceId,
+            bool installmentPlanId,
+          })
         > {
   $$TransactionsTableTableManager(_$AppDatabase db, $TransactionsTable table)
     : super(
@@ -3237,6 +4065,8 @@ class $$TransactionsTableTableManager
                 Value<PaymentMethod?> paymentMethod = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<int?> recurrenceId = const Value.absent(),
+                Value<int?> installmentPlanId = const Value.absent(),
+                Value<int?> installmentNumber = const Value.absent(),
               }) => TransactionsCompanion(
                 id: id,
                 amountCents: amountCents,
@@ -3246,6 +4076,8 @@ class $$TransactionsTableTableManager
                 paymentMethod: paymentMethod,
                 createdAt: createdAt,
                 recurrenceId: recurrenceId,
+                installmentPlanId: installmentPlanId,
+                installmentNumber: installmentNumber,
               ),
           createCompanionCallback:
               ({
@@ -3257,6 +4089,8 @@ class $$TransactionsTableTableManager
                 Value<PaymentMethod?> paymentMethod = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<int?> recurrenceId = const Value.absent(),
+                Value<int?> installmentPlanId = const Value.absent(),
+                Value<int?> installmentNumber = const Value.absent(),
               }) => TransactionsCompanion.insert(
                 id: id,
                 amountCents: amountCents,
@@ -3266,6 +4100,8 @@ class $$TransactionsTableTableManager
                 paymentMethod: paymentMethod,
                 createdAt: createdAt,
                 recurrenceId: recurrenceId,
+                installmentPlanId: installmentPlanId,
+                installmentNumber: installmentNumber,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -3275,60 +4111,84 @@ class $$TransactionsTableTableManager
                 ),
               )
               .toList(),
-          prefetchHooksCallback: ({categoryId = false, recurrenceId = false}) {
-            return PrefetchHooks(
-              db: db,
-              explicitlyWatchedTables: [],
-              addJoins:
-                  <
-                    T extends TableManagerState<
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic
-                    >
-                  >(state) {
-                    if (categoryId) {
-                      state =
-                          state.withJoin(
-                                currentTable: table,
-                                currentColumn: table.categoryId,
-                                referencedTable: $$TransactionsTableReferences
-                                    ._categoryIdTable(db),
-                                referencedColumn: $$TransactionsTableReferences
-                                    ._categoryIdTable(db)
-                                    .id,
-                              )
-                              as T;
-                    }
-                    if (recurrenceId) {
-                      state =
-                          state.withJoin(
-                                currentTable: table,
-                                currentColumn: table.recurrenceId,
-                                referencedTable: $$TransactionsTableReferences
-                                    ._recurrenceIdTable(db),
-                                referencedColumn: $$TransactionsTableReferences
-                                    ._recurrenceIdTable(db)
-                                    .id,
-                              )
-                              as T;
-                    }
+          prefetchHooksCallback:
+              ({
+                categoryId = false,
+                recurrenceId = false,
+                installmentPlanId = false,
+              }) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [],
+                  addJoins:
+                      <
+                        T extends TableManagerState<
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic
+                        >
+                      >(state) {
+                        if (categoryId) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.categoryId,
+                                    referencedTable:
+                                        $$TransactionsTableReferences
+                                            ._categoryIdTable(db),
+                                    referencedColumn:
+                                        $$TransactionsTableReferences
+                                            ._categoryIdTable(db)
+                                            .id,
+                                  )
+                                  as T;
+                        }
+                        if (recurrenceId) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.recurrenceId,
+                                    referencedTable:
+                                        $$TransactionsTableReferences
+                                            ._recurrenceIdTable(db),
+                                    referencedColumn:
+                                        $$TransactionsTableReferences
+                                            ._recurrenceIdTable(db)
+                                            .id,
+                                  )
+                                  as T;
+                        }
+                        if (installmentPlanId) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.installmentPlanId,
+                                    referencedTable:
+                                        $$TransactionsTableReferences
+                                            ._installmentPlanIdTable(db),
+                                    referencedColumn:
+                                        $$TransactionsTableReferences
+                                            ._installmentPlanIdTable(db)
+                                            .id,
+                                  )
+                                  as T;
+                        }
 
-                    return state;
+                        return state;
+                      },
+                  getPrefetchedDataCallback: (items) async {
+                    return [];
                   },
-              getPrefetchedDataCallback: (items) async {
-                return [];
+                );
               },
-            );
-          },
         ),
       );
 }
@@ -3345,7 +4205,11 @@ typedef $$TransactionsTableProcessedTableManager =
       $$TransactionsTableUpdateCompanionBuilder,
       (Transaction, $$TransactionsTableReferences),
       Transaction,
-      PrefetchHooks Function({bool categoryId, bool recurrenceId})
+      PrefetchHooks Function({
+        bool categoryId,
+        bool recurrenceId,
+        bool installmentPlanId,
+      })
     >;
 typedef $$BudgetsTableCreateCompanionBuilder =
     BudgetsCompanion Function({Value<int> categoryId, required int limitCents});
@@ -3605,6 +4469,8 @@ class $AppDatabaseManager {
       $$CategoriesTableTableManager(_db, _db.categories);
   $$RecurrencesTableTableManager get recurrences =>
       $$RecurrencesTableTableManager(_db, _db.recurrences);
+  $$InstallmentPlansTableTableManager get installmentPlans =>
+      $$InstallmentPlansTableTableManager(_db, _db.installmentPlans);
   $$TransactionsTableTableManager get transactions =>
       $$TransactionsTableTableManager(_db, _db.transactions);
   $$BudgetsTableTableManager get budgets =>

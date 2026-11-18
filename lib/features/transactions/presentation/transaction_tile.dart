@@ -21,9 +21,18 @@ class TransactionTile extends StatelessWidget {
     final hasDescription = description != null && description.isNotEmpty;
     final subtitle = [
       if (hasDescription) category.name,
+      if (item.installmentLabel case final label?) 'Parcela $label',
       if (transaction.paymentMethod case final method?) method.label,
+      if (item.isScheduled()) 'Previsto',
     ].join(' · ');
-    final isFixed = transaction.recurrenceId != null;
+    final kindIcon = transaction.installmentPlanId != null
+        ? Icons.credit_card_rounded
+        : transaction.recurrenceId != null
+        ? Icons.event_repeat_rounded
+        : null;
+    final kindLabel = transaction.installmentPlanId != null
+        ? 'Parcelado'
+        : 'Fixo';
 
     final signed = item.signedCents;
     final amountColor = signed < 0
@@ -38,26 +47,28 @@ class TransactionTile extends StatelessWidget {
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
-      subtitle: subtitle.isEmpty && !isFixed
+      subtitle: subtitle.isEmpty && kindIcon == null
           ? null
           : Text.rich(
               TextSpan(
                 children: [
-                  if (isFixed) ...[
+                  if (kindIcon != null) ...[
                     WidgetSpan(
                       alignment: PlaceholderAlignment.middle,
                       child: Icon(
-                        Icons.event_repeat_rounded,
+                        kindIcon,
                         size: 14,
                         color: theme.colorScheme.onSurfaceVariant,
-                        semanticLabel: 'Fixo',
+                        semanticLabel: kindLabel,
                       ),
                     ),
-                    TextSpan(text: subtitle.isEmpty ? ' Fixo' : ' '),
+                    TextSpan(text: subtitle.isEmpty ? ' $kindLabel' : ' '),
                   ],
                   TextSpan(text: subtitle),
                 ],
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
       trailing: Text(
         CurrencyFormatter.formatSigned(signed),

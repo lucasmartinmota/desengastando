@@ -118,7 +118,7 @@ class _RecurrenceTile extends StatelessWidget {
     final isExpense = item.category.type == TransactionType.expense;
     final schedule = recurrence.active
         ? 'Todo dia ${recurrence.dayOfMonth} · próximo '
-              '${DateLabels.day(item.nextDate).toLowerCase()}'
+              '${DateLabels.day(item.nextDate()).toLowerCase()}'
         : 'Pausado';
 
     final tile = ListTile(

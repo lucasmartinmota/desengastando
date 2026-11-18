@@ -22,49 +22,39 @@ void main() {
     });
   });
 
-  group('dueMonths', () {
-    test('só o mês cuja data já chegou', () {
-      expect(
-        RecurrenceSchedule.dueMonths(
-          lastGenerated: const YearMonth(2026, 10),
-          dayOfMonth: 5,
-          today: DateTime(2026, 11, 18, 9),
-        ),
-        [const YearMonth(2026, 11)],
-      );
-    });
-    test('no próprio dia já lança; antes, não', () {
-      expect(
-        RecurrenceSchedule.dueMonths(
-          lastGenerated: const YearMonth(2026, 10),
-          dayOfMonth: 18,
-          today: DateTime(2026, 11, 18, 0, 1),
-        ),
-        hasLength(1),
-      );
-      expect(
-        RecurrenceSchedule.dueMonths(
-          lastGenerated: const YearMonth(2026, 10),
-          dayOfMonth: 19,
-          today: DateTime(2026, 11, 18, 23, 59),
-        ),
-        isEmpty,
-      );
-    });
-    test('preenche os meses em que o app não foi aberto', () {
-      expect(
-        RecurrenceSchedule.dueMonths(
-          lastGenerated: const YearMonth(2026, 10),
-          dayOfMonth: 10,
-          today: DateTime(2027, 1, 10),
-        ),
-        [
-          const YearMonth(2026, 11),
-          const YearMonth(2026, 12),
-          const YearMonth(2027, 1),
-        ],
-      );
-    });
+  test('horizon fica 12 meses à frente', () {
+    expect(
+      RecurrenceSchedule.horizon(DateTime(2026, 11, 18)),
+      const YearMonth(2027, 11),
+    );
+  });
+
+  test('pendingMonths vai do mês seguinte até o limite', () {
+    expect(
+      RecurrenceSchedule.pendingMonths(
+        lastGenerated: const YearMonth(2026, 11),
+        until: const YearMonth(2027, 2),
+      ),
+      [
+        const YearMonth(2026, 12),
+        const YearMonth(2027, 1),
+        const YearMonth(2027, 2),
+      ],
+    );
+    expect(
+      RecurrenceSchedule.pendingMonths(
+        lastGenerated: const YearMonth(2027, 2),
+        until: const YearMonth(2027, 2),
+      ),
+      isEmpty,
+    );
+  });
+
+  test('nextDate: hoje conta; se já passou, vai para o próximo mês', () {
+    final today = DateTime(2026, 11, 18, 15);
+    expect(RecurrenceSchedule.nextDate(18, today), DateTime(2026, 11, 18));
+    expect(RecurrenceSchedule.nextDate(5, today), DateTime(2026, 12, 5));
+    expect(RecurrenceSchedule.nextDate(25, today), DateTime(2026, 11, 25));
   });
 
   test('settledThrough: mês atual se a data já passou, senão o anterior', () {

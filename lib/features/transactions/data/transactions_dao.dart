@@ -1,13 +1,14 @@
 import 'package:desengastando/core/date/year_month.dart';
 import 'package:desengastando/data/database/app_database.dart';
 import 'package:desengastando/data/database/tables.dart';
+import 'package:desengastando/features/transactions/domain/installments.dart';
 import 'package:desengastando/features/transactions/domain/transaction_models.dart';
 import 'package:desengastando/features/transactions/domain/transaction_type.dart';
 import 'package:drift/drift.dart';
 
 part 'transactions_dao.g.dart';
 
-@DriftAccessor(tables: [Transactions, Categories])
+@DriftAccessor(tables: [Transactions, Categories, InstallmentPlans])
 class TransactionsDao extends DatabaseAccessor<AppDatabase>
     with _$TransactionsDaoMixin {
   TransactionsDao(super.attachedDatabase);
@@ -24,6 +25,10 @@ class TransactionsDao extends DatabaseAccessor<AppDatabase>
               categories,
               categories.id.equalsExp(transactions.categoryId),
             ),
+            leftOuterJoin(
+              installmentPlans,
+              installmentPlans.id.equalsExp(transactions.installmentPlanId),
+            ),
           ])
           ..where(_inMonth(month))
           ..orderBy([
@@ -37,6 +42,7 @@ class TransactionsDao extends DatabaseAccessor<AppDatabase>
           TransactionWithCategory(
             transaction: row.readTable(transactions),
             category: row.readTable(categories),
+            installmentCount: row.readTableOrNull(installmentPlans)?.count,
           ),
       ],
     );
@@ -159,6 +165,62 @@ class TransactionsDao extends DatabaseAccessor<AppDatabase>
   /// Reinsere um lançamento excluído com o mesmo id (para o "Desfazer").
   Future<int> restoreTransaction(Transaction transaction) =>
       into(transactions).insert(transaction);
+
+  /// Compra parcelada: cria as [count] parcelas de uma vez, uma por mês a
+  /// partir da data de [first], dividindo [totalCents] entre elas.
+  /// Devolve o id do parcelamento.
+  Future<int> addInstallments(
+    TransactionsCompanion first, {
+    required int count,
+    required int totalCents,
+  }) => transaction(() async {
+    final planId = await into(installmentPlans).insert(
+      InstallmentPlansCompanion.insert(count: count, totalCents: totalCents),
+    );
+    final amounts = Installments.split(totalCents, count);
+    final dates = Installments.dates(first.date.value, count);
+    await batch((b) {
+      b.insertAll(transactions, [
+        for (var i = 0; i < count; i++)
+          first.copyWith(
+            amountCents: Value(amounts[i]),
+            date: Value(dates[i]),
+            installmentPlanId: Value(planId),
+            installmentNumber: Value(i + 1),
+          ),
+      ]);
+    });
+    return planId;
+  });
+
+  Future<InstallmentPlan?> getInstallmentPlan(int id) => (select(
+    installmentPlans,
+  )..where((p) => p.id.equals(id))).getSingleOrNull();
+
+  /// Apaga a parcela [fromNumber] e as seguintes do parcelamento (ex.:
+  /// compra devolvida ou quitada antes). Se não sobrar nenhuma, o
+  /// parcelamento também é removido.
+  Future<int> deleteInstallmentsFrom(int planId, int fromNumber) =>
+      transaction(() async {
+        final removed =
+            await (delete(transactions)..where(
+                  (t) =>
+                      t.installmentPlanId.equals(planId) &
+                      t.installmentNumber.isBiggerOrEqualValue(fromNumber),
+                ))
+                .go();
+        final left =
+            await (select(transactions)
+                  ..where((t) => t.installmentPlanId.equals(planId))
+                  ..limit(1))
+                .get();
+        if (left.isEmpty) {
+          await (delete(
+            installmentPlans,
+          )..where((p) => p.id.equals(planId))).go();
+        }
+        return removed;
+      });
 
   Future<int> deleteTransaction(int id) =>
       (delete(transactions)..where((t) => t.id.equals(id))).go();
