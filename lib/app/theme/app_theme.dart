@@ -39,7 +39,12 @@ abstract final class AppTheme {
         backgroundColor: scheme.surface,
         scrolledUnderElevation: 0,
         centerTitle: false,
-        titleTextStyle: base.textTheme.titleLarge?.copyWith(
+        // Estilo explícito: `base.textTheme` ainda não tem tamanhos aqui
+        // (a geometria tipográfica só é aplicada em `Theme.of`).
+        titleTextStyle: TextStyle(
+          fontFamily: fontFamily,
+          fontSize: 22,
+          height: 28 / 22,
           fontWeight: FontWeight.w700,
           color: scheme.onSurface,
         ),
