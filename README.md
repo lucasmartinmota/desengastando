@@ -8,7 +8,7 @@ Seus dados ficam só no seu aparelho.
 🚧 Em desenvolvimento (v0.1). Roadmap:
 
 - [x] **Etapa 0** — Setup: estrutura, tema, navegação, lints
-- [ ] **Etapa 1** — Banco (Drift) e domínio: transações, categorias, orçamentos
+- [x] **Etapa 1** — Banco (Drift) e domínio: transações, categorias, orçamentos
 - [ ] **Etapa 2** — Lançamentos: cadastro rápido e listagem
 - [ ] **Etapa 3** — Resumo do mês com gráficos
 - [ ] **Etapa 4** — Gerenciar categorias
