@@ -1,4 +1,5 @@
 import 'package:desengastando/data/database/app_database.dart';
+import 'package:desengastando/features/transactions/domain/transaction_type.dart';
 import 'package:flutter/foundation.dart';
 
 /// Transação com sua categoria, pronta para a listagem.
@@ -11,6 +12,11 @@ class TransactionWithCategory {
 
   final Transaction transaction;
   final TransactionCategory category;
+
+  /// Valor com sinal: negativo para despesa, positivo para receita.
+  int get signedCents => category.type == TransactionType.expense
+      ? -transaction.amountCents
+      : transaction.amountCents;
 }
 
 /// Totais de um mês, em centavos.

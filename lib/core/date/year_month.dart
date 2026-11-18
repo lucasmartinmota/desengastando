@@ -40,3 +40,8 @@ class YearMonth implements Comparable<YearMonth> {
   @override
   String toString() => '$year-${month.toString().padLeft(2, '0')}';
 }
+
+extension DateOnlyX on DateTime {
+  /// Mesmo dia, à meia-noite (horário local).
+  DateTime get dateOnly => DateTime(year, month, day);
+}

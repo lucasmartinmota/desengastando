@@ -11,5 +11,20 @@ abstract final class CurrencyFormatter {
     decimalDigits: 2,
   );
 
+  static final NumberFormat _plain = NumberFormat.decimalPatternDigits(
+    locale: 'pt_BR',
+    decimalDigits: 2,
+  );
+
+  /// `R$ 1.234,56`
   static String format(int cents) => _brl.format(cents / 100);
+
+  /// `1.234,56` (sem símbolo), para campos de entrada.
+  static String formatPlain(int cents) => _plain.format(cents / 100);
+
+  /// `+R$ 10,00` / `−R$ 10,00` (sinal de menos tipográfico); zero sem sinal.
+  static String formatSigned(int cents) {
+    if (cents == 0) return format(0);
+    return cents < 0 ? '−${format(-cents)}' : '+${format(cents)}';
+  }
 }

@@ -9,7 +9,7 @@ Seus dados ficam só no seu aparelho.
 
 - [x] **Etapa 0** — Setup: estrutura, tema, navegação, lints
 - [x] **Etapa 1** — Banco (Drift) e domínio: transações, categorias, orçamentos
-- [ ] **Etapa 2** — Lançamentos: cadastro rápido e listagem
+- [x] **Etapa 2** — Lançamentos: cadastro rápido e listagem
 - [ ] **Etapa 3** — Resumo do mês com gráficos
 - [ ] **Etapa 4** — Gerenciar categorias
 - [ ] **Etapa 5** — Orçamentos por categoria com alertas
@@ -44,7 +44,7 @@ lib/
 
 ```bash
 flutter pub get
-dart run build_runner build --delete-conflicting-outputs
+dart run build_runner build
 flutter run
 ```
 

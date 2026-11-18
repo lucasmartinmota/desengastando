@@ -111,6 +111,10 @@ class TransactionsDao extends DatabaseAccessor<AppDatabase>
   Future<bool> updateTransaction(Transaction transaction) =>
       update(transactions).replace(transaction);
 
+  /// Reinsere um lançamento excluído com o mesmo id (para o "Desfazer").
+  Future<int> restoreTransaction(Transaction transaction) =>
+      into(transactions).insert(transaction);
+
   Future<int> deleteTransaction(int id) =>
       (delete(transactions)..where((t) => t.id.equals(id))).go();
 }
