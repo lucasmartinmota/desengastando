@@ -1,104 +1,125 @@
 # Desengastando 😮‍💨
 
-Controle de gastos pessoal, simples e **offline**, feito em Flutter para Android e iOS.
-Seus dados ficam só no seu aparelho.
+Controle de gastos pessoal, simples e **offline**, para Android e iOS.
 
-## Status
+Não tem cadastro, login nem nuvem: tudo fica só no seu celular.
 
-v0.1 — pronto para uso pessoal. Roadmap concluído:
+## Baixar e instalar
 
-- [x] **Etapa 0** — Setup: estrutura, tema, navegação, lints
-- [x] **Etapa 1** — Banco (Drift) e domínio: transações, categorias, orçamentos
-- [x] **Etapa 2** — Lançamentos: cadastro rápido e listagem
-- [x] **Etapa 3** — Resumo do mês com gráficos
-- [x] **Etapa 4** — Gerenciar categorias
-- [x] **Etapa 5** — Orçamentos por categoria com alertas
-- [x] **Etapa 6** — Polimento, ícone, backup/exportação
+### Android
 
-## Funcionalidades
+1. Na página de [Releases](../../releases/latest), baixe o APK:
+   - `Desengastando-0.1.0-arm64.apk`: serve para quase todos os celulares de 2017 para cá.
+   - `Desengastando-0.1.0-arm32.apk`: só para aparelhos bem antigos, se o primeiro não instalar.
+2. Abra o arquivo baixado. Na primeira vez, o Android pede para permitir
+   **"Instalar apps desconhecidos"** para o navegador ou o gerenciador de arquivos. Permita.
+3. Toque em **Instalar**.
 
-- **Lançamentos** rápidos (valor já focado, "Hoje" pré-selecionado), com edição, exclusão por gesto e desfazer
-- **Resumo do mês**: saldo, comparação com o mês anterior, gastos por categoria e evolução de 6 meses
-- **Categorias** personalizáveis (cor, ícone, ordem), arquivadas sem perder o histórico
-- **Lançamentos fixos** (salário, aluguel, assinaturas): cadastre uma vez e os próximos 12 meses já aparecem lançados, como previstos
-- **Compras parceladas**: informe o total (ou o valor da parcela) e a quantidade, e cada parcela entra no seu mês ("Parcela 3/10")
-- **Orçamentos** mensais por categoria, com aviso a partir de 80% e ao estourar
-- **Backup** completo em JSON (exportar/restaurar) e **planilha CSV** dos lançamentos
+> O app não está na Play Store, então o Android pode mostrar um aviso do Play Protect.
+> Isso é esperado: toque em "Mais detalhes" e depois em "Instalar assim mesmo".
 
-## Stack
+**Para atualizar**, baixe o APK da versão nova e instale por cima. Seus dados continuam lá.
 
-| | |
-|---|---|
-| Estado | [Riverpod](https://riverpod.dev) + `riverpod_generator` |
-| Banco local | [Drift](https://drift.simonbinder.eu) (SQLite) |
-| Navegação | [go_router](https://pub.dev/packages/go_router) |
-| Gráficos | [fl_chart](https://pub.dev/packages/fl_chart) |
-| Lints | [very_good_analysis](https://pub.dev/packages/very_good_analysis) |
+### iOS
 
-## Estrutura
+Ainda não há versão pronta para instalar. É preciso compilar o app num Mac com
+Xcode (veja o [guia de desenvolvimento](CONTRIBUTING.md)).
 
-```
-lib/
-├── app/        # MaterialApp, tema, rotas, shell de navegação
-├── core/       # formatadores, widgets e utilitários compartilhados
-├── data/       # banco de dados (Drift)
-└── features/   # uma pasta por funcionalidade: data / domain / presentation
-```
+## Como usar
 
-## Convenções
+### Lançar um gasto ou uma receita
 
-- **Dinheiro é `int` em centavos.** Nunca `double`. Conversão só na exibição (`CurrencyFormatter`).
-- Arquivos `*.g.dart` são gerados e versionados; regenere após mudar providers ou tabelas.
-- **Mudou o banco?** Suba `schemaVersion`, escreva o passo em `onUpgrade` e rode
-  `dart run drift_dev schema dump lib/data/database/app_database.dart drift_schemas/` e
-  `dart run drift_dev schema generate drift_schemas/ test/generated_migrations/`;
-  `test/data/migration_test.dart` valida a migração contra os schemas antigos.
+Toque em **+** e digite o valor (o campo já abre selecionado). Depois escolha a
+categoria e salve. A data já vem como hoje. A categoria define se o lançamento é
+despesa ou receita.
 
-## Rodando
+- **Editar:** toque no lançamento.
+- **Excluir:** arraste o lançamento para a esquerda. Se foi sem querer, toque em **Desfazer** logo em seguida.
+- **Trocar de mês:** use as setas no topo da tela.
 
-```bash
-flutter pub get
-dart run build_runner build
-flutter run
-```
+### Salário, aluguel, assinaturas: lançamentos fixos
 
-Testes e análise:
+Ao lançar algo, escolha **Fixo**. O app repete o lançamento todo mês, no mesmo dia,
+e os próximos 12 meses já aparecem na lista marcados como **Previsto**. Assim você
+vê como o mês que vem deve fechar.
 
-```bash
-flutter analyze
-flutter test
-```
+Os fixos ficam em **Ajustes → Lançamentos fixos** (ou no ícone de repetição no
+topo da aba Lançamentos). Lá você pode:
 
-## Ícone e tela de abertura
+- **Mudar valor ou dia:** vale do próximo lançamento em diante. O que já passou não muda.
+- **Pausar:** para de lançar até você reativar.
+- **Excluir:** apaga os lançamentos futuros e mantém o histórico.
 
-Os PNGs em `assets/icon/` são desenhados por código, em
-`tool/icon/render_icons_test.dart`. Para mudar o ícone, edite esse arquivo e rode:
+Se o dia escolhido não existir no mês (dia 31 em fevereiro, por exemplo), o
+lançamento cai no último dia do mês.
 
-```bash
-flutter test tool/icon/render_icons_test.dart
-dart run flutter_launcher_icons
-dart run flutter_native_splash:create
-```
+### Compras parceladas
 
-> O `flutter_launcher_icons` altera `ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS`
-> no `project.pbxproj` do iOS por engano; descarte essa mudança.
+Ao lançar, escolha **Parcelado**:
 
-## Gerando o instalável
+1. Escolha em quantas vezes, de 2x a 48x.
+2. Informe o **total** da compra **ou** o valor de **cada parcela**.
+3. Confira o resumo (por exemplo, "10x de R$ 120,00 · última em agosto de 2027") e salve.
 
-**Android** (um APK por arquitetura, ~20 MB cada; celulares atuais usam `arm64-v8a`):
+Cada parcela aparece no seu mês como "Parcela 3/10". Se o total não dividir
+certinho, os centavos que sobram vão para a primeira parcela.
 
-```bash
-flutter build apk --release --split-per-abi
-# build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
-```
+Para excluir, toque numa parcela e escolha **Só esta** ou **Esta e as próximas**.
+A segunda opção é útil, por exemplo, quando você quita a compra antes do fim.
 
-O build de release ainda usa a chave de debug — serve para instalar no próprio
-celular. Para publicar na Play Store, crie uma chave de upload e configure o
-`signingConfig` em `android/app/build.gradle.kts`.
+### Resumo do mês
 
-**iOS**: abra `ios/Runner.xcworkspace` no Xcode, escolha seu time em
-*Signing & Capabilities* e rode no aparelho (`flutter run --release`).
+A aba **Resumo** mostra:
+
+- o saldo do mês;
+- a comparação com o mês anterior;
+- quanto foi para cada categoria;
+- a evolução dos últimos 6 meses.
+
+### Orçamentos
+
+Na aba **Orçamentos**, você define um limite mensal para uma categoria de despesa
+(por exemplo, "Mercado: R$ 800"). A barra mostra quanto já foi gasto. O app avisa
+quando você chega a **80%** do limite e quando passa dele.
+
+### Categorias
+
+Em **Ajustes → Categorias** você cria, renomeia e escolhe a cor e o ícone de cada
+categoria. Para mudar a ordem, segure e arraste. A categoria que você não usa mais
+pode ser **arquivada**: ela sai da lista na hora de lançar, mas o histórico fica intacto.
+
+## Seus dados e o backup
+
+Os dados ficam **somente no seu celular** e nada é enviado para a internet. Mas,
+se você desinstalar o app, trocar de celular ou perder o aparelho, os dados vão
+junto. Por isso:
+
+- **Faça backup de vez em quando:** use **Ajustes → Exportar backup** e guarde o
+  arquivo no Google Drive, mande por e-mail para você mesmo etc.
+- **Para restaurar** (num celular novo, por exemplo): use **Ajustes → Restaurar backup**
+  e escolha o arquivo. Atenção: restaurar **substitui** tudo o que está no app.
+- **Planilha:** **Ajustes → Exportar planilha** gera um CSV com todos os
+  lançamentos, que abre no Excel ou no Google Planilhas.
+
+## Perguntas frequentes
+
+**O app é gratuito?**
+Sim. É de código aberto ([MIT](LICENSE)), sem anúncios e sem coleta de dados.
+
+**Precisa de internet?**
+Não. O app funciona 100% offline.
+
+**Meu fixo não aparece num mês muito distante.**
+Os fixos são lançados com até 12 meses de antecedência. Os meses seguintes vão
+aparecendo sozinhos com o passar do tempo.
+
+**Encontrei um problema ou tenho uma sugestão.**
+Abra uma [issue](../../issues) contando o que aconteceu.
+
+## Desenvolvimento
+
+Quer compilar o app ou contribuir? Veja o [guia de desenvolvimento](CONTRIBUTING.md).
 
 ## Licença
 
-Código sob [MIT](LICENSE). Fonte [Manrope](https://github.com/googlefonts/manrope) sob [SIL OFL 1.1](assets/fonts/manrope/OFL.txt).
+O código está sob a licença [MIT](LICENSE). A fonte [Manrope](https://github.com/googlefonts/manrope) está sob a [SIL OFL 1.1](assets/fonts/manrope/OFL.txt).
