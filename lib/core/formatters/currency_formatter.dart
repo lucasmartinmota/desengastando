@@ -23,6 +23,11 @@ abstract final class CurrencyFormatter {
   static String formatPlain(int cents) => _plain.format(cents / 100);
 
   /// `+R$ 10,00` / `−R$ 10,00` (sinal de menos tipográfico); zero sem sinal.
+  static final NumberFormat _compact = NumberFormat.compact(locale: 'pt_BR');
+
+  /// `1,2 mil`, `350` — para eixos de gráfico (sem símbolo).
+  static String formatCompact(int cents) => _compact.format(cents / 100);
+
   static String formatSigned(int cents) {
     if (cents == 0) return format(0);
     return cents < 0 ? '−${format(-cents)}' : '+${format(cents)}';

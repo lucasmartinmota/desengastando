@@ -16,6 +16,10 @@ abstract final class DateLabels {
     return DateFormat(pattern, 'pt_BR').format(day);
   }
 
+  /// `outubro` (só o nome, minúsculo)
+  static String monthName(YearMonth month) =>
+      DateFormat('MMMM', 'pt_BR').format(month.start);
+
   /// `Novembro de 2026`
   static String month(YearMonth month) {
     final text = DateFormat("MMMM 'de' y", 'pt_BR').format(month.start);

@@ -1,3 +1,4 @@
+import 'package:desengastando/core/date/year_month.dart';
 import 'package:desengastando/data/database/app_database.dart';
 import 'package:desengastando/features/transactions/domain/transaction_type.dart';
 import 'package:flutter/foundation.dart';
@@ -52,4 +53,25 @@ class CategoryTotal {
 
   final TransactionCategory category;
   final int totalCents;
+}
+
+/// Total de despesas de um mês, em centavos.
+@immutable
+class MonthTotal {
+  const MonthTotal({required this.month, required this.totalCents});
+
+  final YearMonth month;
+  final int totalCents;
+
+  @override
+  bool operator ==(Object other) =>
+      other is MonthTotal &&
+      other.month == month &&
+      other.totalCents == totalCents;
+
+  @override
+  int get hashCode => Object.hash(month, totalCents);
+
+  @override
+  String toString() => 'MonthTotal($month, $totalCents)';
 }

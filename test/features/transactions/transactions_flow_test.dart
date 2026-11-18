@@ -88,9 +88,10 @@ void main() {
 
     await _addExpense(tester, digits: '5000', category: 'Mercado');
 
-    // Saldo negativo e total de despesas.
+    // Saldo negativo; o valor aparece no total de despesas e no ranking.
     expect(find.text('-R\$${_nbsp}50,00'), findsOneWidget);
-    expect(find.text('R\$${_nbsp}50,00'), findsOneWidget);
+    expect(find.text('R\$${_nbsp}50,00'), findsNWidgets(2));
+    expect(find.text('100%'), findsOneWidget);
     expect(find.text('Nada por aqui ainda'), findsNothing);
 
     await disposeApp(tester, db);

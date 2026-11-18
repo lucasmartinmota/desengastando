@@ -105,6 +105,51 @@ class TransactionsDao extends DatabaseAccessor<AppDatabase>
     );
   }
 
+  /// Despesas por mês nos [months] meses terminando em [last] (inclusive),
+  /// do mais antigo ao mais recente, com zero nos meses sem gastos.
+  ///
+  /// O agrupamento é feito em Dart, com a data local: o `strftime` do SQLite
+  /// trabalha em UTC e jogaria gastos da meia-noite para o mês errado em
+  /// fusos positivos.
+  Stream<List<MonthTotal>> watchMonthlyExpenses({
+    required YearMonth last,
+    int months = 6,
+  }) {
+    final range = [
+      for (var m = last, i = 0; i < months; m = m.previous, i++) m,
+    ].reversed.toList();
+
+    final query =
+        selectOnly(transactions).join([
+            innerJoin(
+              categories,
+              categories.id.equalsExp(transactions.categoryId),
+              useColumns: false,
+            ),
+          ])
+          ..addColumns([transactions.date, transactions.amountCents])
+          ..where(
+            categories.type.equalsValue(TransactionType.expense) &
+                transactions.date.isBiggerOrEqualValue(range.first.start) &
+                transactions.date.isSmallerThanValue(last.end),
+          );
+
+    return query.watch().map((rows) {
+      final totals = {for (final m in range) m: 0};
+      for (final row in rows) {
+        final month = YearMonth.fromDate(row.read(transactions.date)!);
+        totals.update(
+          month,
+          (sum) => sum + row.read(transactions.amountCents)!,
+          ifAbsent: () => 0,
+        );
+      }
+      return [
+        for (final m in range) MonthTotal(month: m, totalCents: totals[m]!),
+      ];
+    });
+  }
+
   Future<int> addTransaction(TransactionsCompanion entry) =>
       into(transactions).insert(entry);
 

@@ -140,3 +140,94 @@ final class MonthSummaryProvider
 }
 
 String _$monthSummaryHash() => r'c79a2a490a94a086062ffd4d5433e478b33a200d';
+
+/// Gastos do mês selecionado por categoria, do maior para o menor.
+
+@ProviderFor(expensesByCategory)
+final expensesByCategoryProvider = ExpensesByCategoryProvider._();
+
+/// Gastos do mês selecionado por categoria, do maior para o menor.
+
+final class ExpensesByCategoryProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<CategoryTotal>>,
+          List<CategoryTotal>,
+          Stream<List<CategoryTotal>>
+        >
+    with
+        $FutureModifier<List<CategoryTotal>>,
+        $StreamProvider<List<CategoryTotal>> {
+  /// Gastos do mês selecionado por categoria, do maior para o menor.
+  ExpensesByCategoryProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'expensesByCategoryProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$expensesByCategoryHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<List<CategoryTotal>> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<List<CategoryTotal>> create(Ref ref) {
+    return expensesByCategory(ref);
+  }
+}
+
+String _$expensesByCategoryHash() =>
+    r'4dfc3e1cd78afb15f4a5a987691f0a0b9004a604';
+
+/// Despesas dos 6 meses que terminam no mês selecionado.
+
+@ProviderFor(monthlyExpenses)
+final monthlyExpensesProvider = MonthlyExpensesProvider._();
+
+/// Despesas dos 6 meses que terminam no mês selecionado.
+
+final class MonthlyExpensesProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<MonthTotal>>,
+          List<MonthTotal>,
+          Stream<List<MonthTotal>>
+        >
+    with $FutureModifier<List<MonthTotal>>, $StreamProvider<List<MonthTotal>> {
+  /// Despesas dos 6 meses que terminam no mês selecionado.
+  MonthlyExpensesProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'monthlyExpensesProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$monthlyExpensesHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<List<MonthTotal>> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<List<MonthTotal>> create(Ref ref) {
+    return monthlyExpenses(ref);
+  }
+}
+
+String _$monthlyExpensesHash() => r'2c01458d86ffdf05a29e16ea26a37f683443add5';

@@ -21,3 +21,15 @@ Stream<List<TransactionWithCategory>> monthTransactions(Ref ref) => ref
 Stream<MonthSummary> monthSummary(Ref ref) => ref
     .watch(transactionsDaoProvider)
     .watchMonthSummary(ref.watch(selectedMonthProvider));
+
+/// Gastos do mês selecionado por categoria, do maior para o menor.
+@riverpod
+Stream<List<CategoryTotal>> expensesByCategory(Ref ref) => ref
+    .watch(transactionsDaoProvider)
+    .watchExpensesByCategory(ref.watch(selectedMonthProvider));
+
+/// Despesas dos 6 meses que terminam no mês selecionado.
+@riverpod
+Stream<List<MonthTotal>> monthlyExpenses(Ref ref) => ref
+    .watch(transactionsDaoProvider)
+    .watchMonthlyExpenses(last: ref.watch(selectedMonthProvider));
