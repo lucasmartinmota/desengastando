@@ -2,6 +2,7 @@ import 'package:desengastando/app/theme/app_theme.dart';
 import 'package:desengastando/core/formatters/currency_formatter.dart';
 import 'package:desengastando/core/widgets/empty_state.dart';
 import 'package:desengastando/core/widgets/month_switcher.dart';
+import 'package:desengastando/core/widgets/progress_bar.dart';
 import 'package:desengastando/features/budgets/data/budgets_providers.dart';
 import 'package:desengastando/features/budgets/domain/budget_progress.dart';
 import 'package:desengastando/features/budgets/presentation/budget_form_sheet.dart';
@@ -117,15 +118,7 @@ class _TotalsCard extends StatelessWidget {
               ).copyWith(fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 12),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: LinearProgressIndicator(
-                value: ratio.clamp(0, 1),
-                minHeight: 8,
-                color: scheme.primary,
-                backgroundColor: scheme.surfaceContainerHighest,
-              ),
-            ),
+            ProgressBar(value: ratio, color: scheme.primary),
             const SizedBox(height: 8),
             Text(
               '${CurrencyFormatter.format(totals.spentCents)} gastos de '

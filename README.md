@@ -5,7 +5,7 @@ Seus dados ficam só no seu aparelho.
 
 ## Status
 
-🚧 Em desenvolvimento (v0.1). Roadmap:
+v0.1 — pronto para uso pessoal. Roadmap concluído:
 
 - [x] **Etapa 0** — Setup: estrutura, tema, navegação, lints
 - [x] **Etapa 1** — Banco (Drift) e domínio: transações, categorias, orçamentos
@@ -13,7 +13,15 @@ Seus dados ficam só no seu aparelho.
 - [x] **Etapa 3** — Resumo do mês com gráficos
 - [x] **Etapa 4** — Gerenciar categorias
 - [x] **Etapa 5** — Orçamentos por categoria com alertas
-- [ ] **Etapa 6** — Polimento, ícone, backup/exportação
+- [x] **Etapa 6** — Polimento, ícone, backup/exportação
+
+## Funcionalidades
+
+- **Lançamentos** rápidos (valor já focado, "Hoje" pré-selecionado), com edição, exclusão por gesto e desfazer
+- **Resumo do mês**: saldo, comparação com o mês anterior, gastos por categoria e evolução de 6 meses
+- **Categorias** personalizáveis (cor, ícone, ordem), arquivadas sem perder o histórico
+- **Orçamentos** mensais por categoria, com aviso a partir de 80% e ao estourar
+- **Backup** completo em JSON (exportar/restaurar) e **planilha CSV** dos lançamentos
 
 ## Stack
 
@@ -54,6 +62,36 @@ Testes e análise:
 flutter analyze
 flutter test
 ```
+
+## Ícone e tela de abertura
+
+Os PNGs em `assets/icon/` são desenhados por código, em
+`tool/icon/render_icons_test.dart`. Para mudar o ícone, edite esse arquivo e rode:
+
+```bash
+flutter test tool/icon/render_icons_test.dart
+dart run flutter_launcher_icons
+dart run flutter_native_splash:create
+```
+
+> O `flutter_launcher_icons` altera `ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS`
+> no `project.pbxproj` do iOS por engano; descarte essa mudança.
+
+## Gerando o instalável
+
+**Android** (um APK por arquitetura, ~20 MB cada; celulares atuais usam `arm64-v8a`):
+
+```bash
+flutter build apk --release --split-per-abi
+# build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
+```
+
+O build de release ainda usa a chave de debug — serve para instalar no próprio
+celular. Para publicar na Play Store, crie uma chave de upload e configure o
+`signingConfig` em `android/app/build.gradle.kts`.
+
+**iOS**: abra `ios/Runner.xcworkspace` no Xcode, escolha seu time em
+*Signing & Capabilities* e rode no aparelho (`flutter run --release`).
 
 ## Licença
 

@@ -1,5 +1,6 @@
 import 'package:desengastando/app/theme/app_theme.dart';
 import 'package:desengastando/core/formatters/currency_formatter.dart';
+import 'package:desengastando/core/widgets/progress_bar.dart';
 import 'package:desengastando/features/categories/presentation/category_icons.dart';
 import 'package:desengastando/features/transactions/domain/transaction_models.dart';
 import 'package:flutter/material.dart';
@@ -82,13 +83,7 @@ class _RankRow extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 6),
-                  LinearProgressIndicator(
-                    value: share,
-                    minHeight: 8,
-                    borderRadius: BorderRadius.circular(4),
-                    color: scheme.primary,
-                    backgroundColor: scheme.surfaceContainerHighest,
-                  ),
+                  ProgressBar(value: share, color: scheme.primary),
                 ],
               ),
             ),

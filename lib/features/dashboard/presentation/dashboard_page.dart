@@ -46,6 +46,13 @@ class DashboardPage extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Resumo'),
+        actions: [
+          IconButton(
+            tooltip: 'Ajustes',
+            icon: const Icon(Icons.settings_outlined),
+            onPressed: () => context.push(AppRoutes.settings),
+          ),
+        ],
         bottom: const MonthSwitcher(),
       ),
       floatingActionButton: FloatingActionButton(

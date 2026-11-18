@@ -1,4 +1,5 @@
 import 'package:desengastando/app/app_shell.dart';
+import 'package:desengastando/features/backup/presentation/settings_page.dart';
 import 'package:desengastando/features/budgets/presentation/budgets_page.dart';
 import 'package:desengastando/features/categories/presentation/categories_page.dart';
 import 'package:desengastando/features/dashboard/presentation/dashboard_page.dart';
@@ -15,6 +16,7 @@ abstract final class AppRoutes {
 
   /// Fora das abas: abre por cima da barra de navegação.
   static const categories = '/categorias';
+  static const settings = '/ajustes';
 }
 
 @Riverpod(keepAlive: true)
@@ -50,6 +52,10 @@ GoRouter router(Ref ref) {
             ],
           ),
         ],
+      ),
+      GoRoute(
+        path: AppRoutes.settings,
+        builder: (_, _) => const SettingsPage(),
       ),
       GoRoute(
         path: AppRoutes.categories,

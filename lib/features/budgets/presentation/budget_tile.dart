@@ -1,6 +1,7 @@
 import 'package:desengastando/app/theme/app_colors.dart';
 import 'package:desengastando/app/theme/app_theme.dart';
 import 'package:desengastando/core/formatters/currency_formatter.dart';
+import 'package:desengastando/core/widgets/progress_bar.dart';
 import 'package:desengastando/features/budgets/domain/budget_progress.dart';
 import 'package:desengastando/features/categories/presentation/category_icons.dart';
 import 'package:flutter/material.dart';
@@ -93,15 +94,7 @@ class BudgetTile extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 6),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(4),
-                      child: LinearProgressIndicator(
-                        value: progress.ratio.clamp(0, 1),
-                        minHeight: 8,
-                        color: statusColor,
-                        backgroundColor: scheme.surfaceContainerHighest,
-                      ),
-                    ),
+                    ProgressBar(value: progress.ratio, color: statusColor),
                     const SizedBox(height: 6),
                     Row(
                       children: [

@@ -37,7 +37,13 @@ class MonthSwitcher extends ConsumerWidget implements PreferredSizeWidget {
                 fontWeight: FontWeight.w700,
               ),
             ),
-            child: Text(DateLabels.month(month)),
+            // Troca suave do rótulo ao mudar de mês.
+            child: AnimatedSwitcher(
+              duration: MediaQuery.disableAnimationsOf(context)
+                  ? Duration.zero
+                  : const Duration(milliseconds: 200),
+              child: Text(DateLabels.month(month), key: ValueKey(month)),
+            ),
           ),
           IconButton(
             tooltip: 'Próximo mês',

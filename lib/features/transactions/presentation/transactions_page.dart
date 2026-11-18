@@ -42,6 +42,15 @@ class _TransactionsPageState extends ConsumerState<TransactionsPage> {
 
   @override
   Widget build(BuildContext context) {
+    // Quando o banco confirma a exclusão (o id sumiu da lista), o id sai de
+    // `_hidden`; senão, se o mesmo id voltasse (ex.: restaurar um backup),
+    // a linha continuaria escondida.
+    ref.listen(monthTransactionsProvider, (_, next) {
+      final items = next.value;
+      if (items == null || _hidden.isEmpty) return;
+      final present = {for (final t in items) t.transaction.id};
+      _hidden.removeWhere((id) => !present.contains(id));
+    });
     final transactions = ref.watch(monthTransactionsProvider);
 
     return Scaffold(
