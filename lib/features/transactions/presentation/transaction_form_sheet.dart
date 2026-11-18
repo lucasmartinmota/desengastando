@@ -4,6 +4,8 @@ import 'package:desengastando/core/date/year_month.dart';
 import 'package:desengastando/core/formatters/cents_input_formatter.dart';
 import 'package:desengastando/core/formatters/date_labels.dart';
 import 'package:desengastando/data/database/app_database.dart';
+import 'package:desengastando/features/budgets/data/budgets_providers.dart';
+import 'package:desengastando/features/budgets/domain/budget_progress.dart';
 import 'package:desengastando/features/categories/data/categories_providers.dart';
 import 'package:desengastando/features/categories/presentation/category_form_sheet.dart';
 import 'package:desengastando/features/categories/presentation/category_icons.dart';
@@ -94,17 +96,27 @@ class _TransactionFormSheetState extends ConsumerState<TransactionFormSheet> {
     final dao = ref.read(transactionsDaoProvider);
     final navigator = Navigator.of(context);
     final messenger = ScaffoldMessenger.of(context);
+    final onSnackBar = Theme.of(context).colorScheme.onInverseSurface;
     final text = _description.text.trim();
     final description = Value(text.isEmpty ? null : text);
 
+    // Orçamento antes e depois do lançamento: só avisa se ele subiu de faixa.
+    final budgets = ref.read(budgetsDaoProvider);
+    final categoryId = _categoryId!;
+    final month = YearMonth.fromDate(_date);
+    final isExpense = _type == TransactionType.expense;
+
     try {
+      final before = isExpense
+          ? await budgets.getProgress(categoryId, month)
+          : null;
       final initial = widget.initial;
       if (initial == null) {
         await dao.addTransaction(
           TransactionsCompanion.insert(
             amountCents: _cents,
             date: _date,
-            categoryId: _categoryId!,
+            categoryId: categoryId,
             description: description,
             paymentMethod: Value(_paymentMethod),
           ),
@@ -114,13 +126,32 @@ class _TransactionFormSheetState extends ConsumerState<TransactionFormSheet> {
           initial.transaction.copyWith(
             amountCents: _cents,
             date: _date,
-            categoryId: _categoryId,
+            categoryId: categoryId,
             description: description,
             paymentMethod: Value(_paymentMethod),
           ),
         );
       }
+      final alert = before == null
+          ? null
+          : budgetAlert(
+              before: before,
+              after: await budgets.getProgress(categoryId, month),
+            );
       navigator.pop();
+      if (alert != null) {
+        messenger.showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.warning_amber_rounded, color: onSnackBar),
+                const SizedBox(width: 12),
+                Expanded(child: Text(alert)),
+              ],
+            ),
+          ),
+        );
+      }
     } on Exception {
       if (mounted) setState(() => _saving = false);
       messenger.showSnackBar(

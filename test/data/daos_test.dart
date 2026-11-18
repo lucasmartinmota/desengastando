@@ -200,6 +200,37 @@ void main() {
       );
     });
 
+    test('watchProgress soma só o mês e mantém orçamento sem gasto', () async {
+      final mercado = expense['Mercado']!;
+      final lazer = expense['Lazer']!;
+      await db.budgetsDao.setBudget(categoryId: mercado.id, limitCents: 50000);
+      await db.budgetsDao.setBudget(categoryId: lazer.id, limitCents: 20000);
+      await add(mercado, 30000, DateTime(2026, 11, 2));
+      await add(mercado, 15000, DateTime(2026, 11, 30, 23, 59));
+      await add(mercado, 99900, DateTime(2026, 10, 31));
+      await add(mercado, 99900, DateTime(2026, 12));
+
+      final progress = await db.budgetsDao.watchProgress(november).first;
+
+      expect(progress.map((p) => p.category.name), ['Mercado', 'Lazer']);
+      expect(progress.first.spentCents, 45000);
+      expect(progress.first.percent, 90);
+      expect(progress.last.spentCents, 0);
+    });
+
+    test('getProgress traz uma categoria ou null', () async {
+      final mercado = expense['Mercado']!;
+      await db.budgetsDao.setBudget(categoryId: mercado.id, limitCents: 10000);
+      await add(mercado, 12000, DateTime(2026, 11, 5));
+
+      final progress = await db.budgetsDao.getProgress(mercado.id, november);
+      expect(progress?.spentCents, 12000);
+      expect(
+        await db.budgetsDao.getProgress(expense['Lazer']!.id, november),
+        isNull,
+      );
+    });
+
     test('orçamento de categoria arquivada não aparece', () async {
       final lazer = expense['Lazer']!;
       await db.budgetsDao.setBudget(categoryId: lazer.id, limitCents: 20000);

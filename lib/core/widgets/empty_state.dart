@@ -6,12 +6,16 @@ class EmptyState extends StatelessWidget {
     required this.emoji,
     required this.title,
     required this.message,
+    this.action,
     super.key,
   });
 
   final String emoji;
   final String title;
   final String message;
+
+  /// Botão opcional abaixo da mensagem (ex.: o primeiro passo).
+  final Widget? action;
 
   @override
   Widget build(BuildContext context) {
@@ -39,6 +43,7 @@ class EmptyState extends StatelessWidget {
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
+            if (action != null) ...[const SizedBox(height: 20), action!],
           ],
         ),
       ),

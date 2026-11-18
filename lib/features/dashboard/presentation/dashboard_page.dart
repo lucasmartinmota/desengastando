@@ -1,9 +1,13 @@
+import 'package:desengastando/app/router.dart';
 import 'package:desengastando/app/theme/app_colors.dart';
 import 'package:desengastando/app/theme/app_theme.dart';
 import 'package:desengastando/core/formatters/currency_formatter.dart';
 import 'package:desengastando/core/formatters/date_labels.dart';
 import 'package:desengastando/core/widgets/empty_state.dart';
 import 'package:desengastando/core/widgets/month_switcher.dart';
+import 'package:desengastando/features/budgets/data/budgets_providers.dart';
+import 'package:desengastando/features/budgets/domain/budget_progress.dart';
+import 'package:desengastando/features/budgets/presentation/budget_tile.dart';
 import 'package:desengastando/features/dashboard/domain/expense_comparison.dart';
 import 'package:desengastando/features/dashboard/presentation/category_ranking.dart';
 import 'package:desengastando/features/dashboard/presentation/monthly_expenses_chart.dart';
@@ -12,6 +16,7 @@ import 'package:desengastando/features/transactions/domain/transaction_models.da
 import 'package:desengastando/features/transactions/presentation/transaction_form_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 class DashboardPage extends ConsumerWidget {
   const DashboardPage({super.key});
@@ -21,6 +26,13 @@ class DashboardPage extends ConsumerWidget {
     final summary = ref.watch(monthSummaryProvider).value ?? MonthSummary.empty;
     final byCategory = ref.watch(expensesByCategoryProvider).value ?? const [];
     final monthly = ref.watch(monthlyExpensesProvider).value ?? const [];
+    // Os estourados primeiro, depois os mais perto do limite.
+    final alerts = [
+      for (final b
+          in ref.watch(budgetProgressProvider).value ??
+              const <BudgetProgress>[])
+        if (b.status != BudgetStatus.ok) b,
+    ]..sort((a, b) => b.ratio.compareTo(a.ratio));
 
     // O penúltimo item da série é o mês anterior ao selecionado.
     final comparison = monthly.length >= 2
@@ -54,6 +66,19 @@ class DashboardPage extends ConsumerWidget {
                 ? DateLabels.monthName(monthly[monthly.length - 2].month)
                 : null,
           ),
+          if (alerts.isNotEmpty)
+            _Section(
+              title: 'Orçamentos em alerta',
+              child: Column(
+                children: [
+                  for (final progress in alerts)
+                    BudgetTile(
+                      progress: progress,
+                      onTap: () => context.go(AppRoutes.budgets),
+                    ),
+                ],
+              ),
+            ),
           if (byCategory.isNotEmpty)
             _Section(
               title: 'Gastos por categoria',
