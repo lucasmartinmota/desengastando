@@ -15,29 +15,90 @@ import 'package:flutter_test/flutter_test.dart';
 
 const _petrol = Color(0xFF0F766E);
 const _petrolLight = Color(0xFF14917F);
-const _mint = Color(0xFF2EC4B6);
-const _white = Color(0xFFFFFFFF);
 const _size = 1024.0;
 
-/// Moeda branca com um "D" e um selo menta com seta para baixo
-/// ("gastar menos"). [scale] encolhe a arte para as áreas seguras.
-void _drawArt(Canvas canvas, double scale) {
-  const center = Offset(_size / 2, _size / 2);
-  final r = _size * 0.30 * scale;
+const _billFront = Color(0xFFE3F6EF);
+const _billMid = Color(0xFFC4EBDD);
+const _billBack = Color(0xFFA3DDC9);
+const _billInk = Color(0xFF0B5E57);
+const _band = Color(0xFFF2C14E);
+const _bandShade = Color(0xFFD9A93A);
 
-  // Moeda
+/// Maço de notas: três cédulas empilhadas e levemente inclinadas, presas por
+/// uma cinta amarela com o "D". [scale] encolhe a arte para as áreas
+/// seguras (ícone adaptativo e tela de abertura).
+void _drawArt(Canvas canvas, double scale) {
+  final w = _size * 0.62 * scale;
+  final h = _size * 0.34 * scale;
+  final radius = Radius.circular(h * 0.12);
+
   canvas
-    ..drawCircle(center, r, Paint()..color = _white)
-    ..drawCircle(
-      center,
-      r * 0.84,
-      Paint()
-        ..color = _petrol.withValues(alpha: 0.14)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = r * 0.05,
+    ..save()
+    ..translate(_size / 2, _size / 2 + h * 0.08)
+    ..rotate(-8 * math.pi / 180);
+
+  // Cédulas de trás aparecem por cima, deslocadas.
+  for (final (i, color) in [_billBack, _billMid].indexed) {
+    final dy = -h * (0.26 - i * 0.13);
+    final dx = w * (0.035 - i * 0.0175);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromCenter(center: Offset(dx, dy), width: w, height: h),
+        radius,
+      ),
+      Paint()..color = color,
+    );
+  }
+
+  // Cédula da frente
+  final front = Rect.fromCenter(center: Offset.zero, width: w, height: h);
+  final ink = Paint()
+    ..color = _billInk.withValues(alpha: 0.35)
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = h * 0.035;
+  canvas
+    ..drawRRect(
+      RRect.fromRectAndRadius(front, radius),
+      Paint()..color = _billFront,
+    )
+    // Moldura interna
+    ..drawRRect(
+      RRect.fromRectAndRadius(
+        front.deflate(h * 0.1),
+        Radius.circular(h * 0.06),
+      ),
+      ink,
+    );
+  // Círculos dos cantos (como o valor impresso nas notas)
+  for (final x in [-1.0, 1.0]) {
+    canvas.drawCircle(
+      Offset(x * w * 0.34, 0),
+      h * 0.13,
+      Paint()..color = _billInk.withValues(alpha: 0.28),
+    );
+  }
+
+  // Cinta no meio, mais alta que as notas para "abraçar" o maço.
+  final bandW = w * 0.3;
+  final band = Rect.fromCenter(
+    center: Offset(0, -h * 0.12),
+    width: bandW,
+    height: h * 1.42,
+  );
+  canvas
+    ..drawRRect(
+      RRect.fromRectAndRadius(
+        band.shift(Offset(0, h * 0.03)),
+        Radius.circular(h * 0.05),
+      ),
+      Paint()..color = _bandShade,
+    )
+    ..drawRRect(
+      RRect.fromRectAndRadius(band, Radius.circular(h * 0.05)),
+      Paint()..color = _band,
     );
 
-  // "D"
+  // "D" na cinta
   final builder =
       ui.ParagraphBuilder(
           ui.ParagraphStyle(
@@ -46,38 +107,17 @@ void _drawArt(Canvas canvas, double scale) {
           ),
         )
         ..pushStyle(
-          ui.TextStyle(color: _petrol, fontSize: r * 1.25, height: 1),
+          ui.TextStyle(color: _billInk, fontSize: h * 0.78, height: 1),
         )
         ..addText('D');
   final paragraph = builder.build()
-    ..layout(ui.ParagraphConstraints(width: r * 2));
-  canvas.drawParagraph(
-    paragraph,
-    Offset(center.dx - r, center.dy - paragraph.height / 2 - r * 0.02),
-  );
-
-  // Selo com seta para baixo
-  final badgeCenter = center + Offset.fromDirection(math.pi / 4, r * 0.92);
-  final badgeR = r * 0.36;
+    ..layout(ui.ParagraphConstraints(width: bandW));
   canvas
-    ..drawCircle(badgeCenter, badgeR + r * 0.07, Paint()..color = _petrol)
-    ..drawCircle(badgeCenter, badgeR, Paint()..color = _mint);
-  final a = badgeR * 0.5;
-  final arrow = Path()
-    ..moveTo(badgeCenter.dx, badgeCenter.dy - a)
-    ..lineTo(badgeCenter.dx, badgeCenter.dy + a * 0.85)
-    ..moveTo(badgeCenter.dx - a * 0.7, badgeCenter.dy + a * 0.15)
-    ..lineTo(badgeCenter.dx, badgeCenter.dy + a * 0.85)
-    ..lineTo(badgeCenter.dx + a * 0.7, badgeCenter.dy + a * 0.15);
-  canvas.drawPath(
-    arrow,
-    Paint()
-      ..color = _white
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = badgeR * 0.22
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round,
-  );
+    ..drawParagraph(
+      paragraph,
+      Offset(-bandW / 2, band.center.dy - paragraph.height / 2),
+    )
+    ..restore();
 }
 
 void _drawBackground(Canvas canvas) {
