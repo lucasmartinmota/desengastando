@@ -11,6 +11,7 @@ import 'package:desengastando/features/budgets/presentation/budget_tile.dart';
 import 'package:desengastando/features/dashboard/domain/expense_comparison.dart';
 import 'package:desengastando/features/dashboard/presentation/category_ranking.dart';
 import 'package:desengastando/features/dashboard/presentation/monthly_expenses_chart.dart';
+import 'package:desengastando/features/reports/presentation/export_report_sheet.dart';
 import 'package:desengastando/features/transactions/data/transactions_providers.dart';
 import 'package:desengastando/features/transactions/domain/transaction_models.dart';
 import 'package:desengastando/features/transactions/presentation/transaction_form_sheet.dart';
@@ -47,6 +48,11 @@ class DashboardPage extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Resumo'),
         actions: [
+          IconButton(
+            tooltip: 'Exportar PDF',
+            icon: const Icon(Icons.picture_as_pdf_outlined),
+            onPressed: () => ExportReportSheet.show(context),
+          ),
           IconButton(
             tooltip: 'Ajustes',
             icon: const Icon(Icons.settings_outlined),

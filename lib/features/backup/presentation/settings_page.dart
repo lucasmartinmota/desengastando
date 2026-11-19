@@ -2,6 +2,7 @@ import 'package:desengastando/app/router.dart';
 import 'package:desengastando/features/backup/data/backup_providers.dart';
 import 'package:desengastando/features/backup/data/backup_service.dart';
 import 'package:desengastando/features/recurrences/data/recurrences_providers.dart';
+import 'package:desengastando/features/reports/presentation/export_report_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -193,6 +194,13 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               subtitle: const Text('Lançamentos em .csv (Excel, Sheets)'),
               onTap: () => _exportCsv(tileContext),
             ),
+          ),
+          ListTile(
+            enabled: !_busy,
+            leading: const Icon(Icons.picture_as_pdf_outlined),
+            title: const Text('Exportar relatório em PDF'),
+            subtitle: const Text('Resumo e lançamentos de um mês ou período'),
+            onTap: () => ExportReportSheet.show(context),
           ),
           const _Header('Sobre'),
           const AboutListTile(

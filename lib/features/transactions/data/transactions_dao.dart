@@ -17,36 +17,53 @@ class TransactionsDao extends DatabaseAccessor<AppDatabase>
       transactions.date.isBiggerOrEqualValue(month.start) &
       transactions.date.isSmallerThanValue(month.end);
 
-  /// Lançamentos do mês, do mais recente para o mais antigo.
-  Stream<List<TransactionWithCategory>> watchByMonth(YearMonth month) {
-    final query =
-        select(transactions).join([
-            innerJoin(
-              categories,
-              categories.id.equalsExp(transactions.categoryId),
-            ),
-            leftOuterJoin(
-              installmentPlans,
-              installmentPlans.id.equalsExp(transactions.installmentPlanId),
-            ),
-          ])
-          ..where(_inMonth(month))
-          ..orderBy([
-            OrderingTerm.desc(transactions.date),
-            OrderingTerm.desc(transactions.id),
-          ]);
-
-    return query.watch().map(
-      (rows) => [
-        for (final row in rows)
-          TransactionWithCategory(
-            transaction: row.readTable(transactions),
-            category: row.readTable(categories),
-            installmentCount: row.readTableOrNull(installmentPlans)?.count,
+  /// Transações com categoria e total de parcelas, filtradas por [where].
+  JoinedSelectStatement<HasResultSet, dynamic> _withCategory(
+    Expression<bool> where, {
+    required OrderingMode order,
+  }) =>
+      select(transactions).join([
+          innerJoin(
+            categories,
+            categories.id.equalsExp(transactions.categoryId),
           ),
-      ],
-    );
-  }
+          leftOuterJoin(
+            installmentPlans,
+            installmentPlans.id.equalsExp(transactions.installmentPlanId),
+          ),
+        ])
+        ..where(where)
+        ..orderBy([
+          OrderingTerm(expression: transactions.date, mode: order),
+          OrderingTerm(expression: transactions.id, mode: order),
+        ]);
+
+  List<TransactionWithCategory> _readWithCategory(List<TypedResult> rows) => [
+    for (final row in rows)
+      TransactionWithCategory(
+        transaction: row.readTable(transactions),
+        category: row.readTable(categories),
+        installmentCount: row.readTableOrNull(installmentPlans)?.count,
+      ),
+  ];
+
+  /// Lançamentos do mês, do mais recente para o mais antigo.
+  Stream<List<TransactionWithCategory>> watchByMonth(YearMonth month) =>
+      _withCategory(
+        _inMonth(month),
+        order: OrderingMode.desc,
+      ).watch().map(_readWithCategory);
+
+  /// Lançamentos com data em [[start], [end]) (fim exclusivo), do mais
+  /// antigo para o mais recente, na ordem de um extrato.
+  Future<List<TransactionWithCategory>> getInPeriod(
+    DateTime start,
+    DateTime end,
+  ) => _withCategory(
+    transactions.date.isBiggerOrEqualValue(start) &
+        transactions.date.isSmallerThanValue(end),
+    order: OrderingMode.asc,
+  ).get().then(_readWithCategory);
 
   /// Total de receitas e despesas do mês.
   Stream<MonthSummary> watchMonthSummary(YearMonth month) {

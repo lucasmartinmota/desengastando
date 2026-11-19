@@ -25,10 +25,23 @@ class BackupFiles {
     required String content,
     required String mimeType,
     Rect? origin,
+  }) => shareBytes(
+    fileName: fileName,
+    bytes: utf8.encode(content),
+    mimeType: mimeType,
+    origin: origin,
+  );
+
+  /// Igual a [share], mas para arquivos binários (ex.: PDF).
+  Future<void> shareBytes({
+    required String fileName,
+    required List<int> bytes,
+    required String mimeType,
+    Rect? origin,
   }) async {
     final dir = await getTemporaryDirectory();
     final file = File('${dir.path}/$fileName');
-    await file.writeAsString(content, flush: true);
+    await file.writeAsBytes(bytes, flush: true);
     await SharePlus.instance.share(
       ShareParams(
         files: [XFile(file.path, mimeType: mimeType)],

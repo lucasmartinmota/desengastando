@@ -9,8 +9,8 @@ Não tem cadastro, login nem nuvem: tudo fica só no seu celular.
 ### Android
 
 1. Na página de [Releases](../../releases/latest), baixe o APK:
-   - `Desengastando-0.1.0-arm64.apk`: serve para quase todos os celulares de 2017 para cá.
-   - `Desengastando-0.1.0-arm32.apk`: só para aparelhos bem antigos, se o primeiro não instalar.
+   - `Desengastando-0.2.0-arm64.apk`: serve para quase todos os celulares de 2017 para cá.
+   - `Desengastando-0.2.0-arm32.apk`: só para aparelhos bem antigos, se o primeiro não instalar.
 2. Abra o arquivo baixado. Na primeira vez, o Android pede para permitir
    **"Instalar apps desconhecidos"** para o navegador ou o gerenciador de arquivos. Permita.
 3. Toque em **Instalar**.
@@ -81,6 +81,19 @@ A aba **Resumo** mostra:
 Na aba **Orçamentos**, você define um limite mensal para uma categoria de despesa
 (por exemplo, "Mercado: R$ 800"). A barra mostra quanto já foi gasto. O app avisa
 quando você chega a **80%** do limite e quando passa dele.
+
+### Relatório em PDF
+
+Na aba **Resumo**, toque no ícone de PDF no topo da tela, ou vá em **Ajustes → Exportar
+relatório em PDF**. Escolha um **mês** ou um **período** qualquer e toque em **Gerar PDF**.
+O relatório mostra:
+
+- receitas, despesas e saldo do período;
+- quanto foi para cada categoria;
+- todos os lançamentos, com data, categoria e forma de pagamento.
+
+Parcelas e lançamentos previstos vêm identificados no relatório. Depois de gerar o PDF, você
+pode salvar no celular, mandar pelo WhatsApp ou por e-mail, ou imprimir.
 
 ### Categorias
 
